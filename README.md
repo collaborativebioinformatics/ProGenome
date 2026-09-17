@@ -6,14 +6,12 @@ Genomics = variant-based phenotype-propensity reference graph to be combined wit
 
 ## 1. Background & Gap
 
-Genome Graph is a tool for displaying genome-wide data sets. The genome contains the relatively stable genetic blueprint of an individual, whereas the proteome captures what's happening in cells now. Protein abundance and function can change in response to disease, treatment, environmental exposure, and physiological stress. Furthermore, one gene may give rise to multiple protein products through alternative splicing and post-translational modifications, making the proteome highly complex.
-
-Although genome graphs can describe genetic variation, they do not by themselves indicate which molecular processes are active. Proteomic datasets provide complementary functional information, but they are high-dimensional and often distributed across hospitals and research institutions. Pooling individual-level genomic, proteomic, and clinical data in a single location can be restricted.
+Genome Graph is a tool for displaying genome-wide data sets. The genome contains the relatively stable genetic blueprint of an individual, whereas the proteome captures what's happening in cells now. Protein abundance and function can change in response to disease, treatment, environmental exposure, and physiological stress. Furthermore, one gene may give rise to multiple protein products through alternative splicing and post-translational modifications, making the proteome highly complex. In addition, pooling individual-level genomic, proteomic, and clinical data from different institutions can be restricted.
 
 
-## 2. ProGenome Mission
+## 2. 🎯 Our Mission
 
-The mission of ProGenome is to develop a proof-of-concept federated workflow that integrates known genome-graph with proteomics. Each participating institution retains its individual-level data locally and trains the same graph-based model. Only model updates are exchanged with a coordinating server, which aggregates them into a shared model and returns the updated parameters for the next training round.
+The mission of ProGenome is to develop a proof-of-concept workflow that integrates known genome-graph with proteomics, with a federated approach in mind where each participating institution retains its individual-level data locally and trains the same graph-based model. Only model updates are exchanged with a coordinating server, which aggregates them into a shared model and returns the updated parameters for the next training round.
 
 
 ### Research Questions
@@ -22,7 +20,7 @@ The mission of ProGenome is to develop a proof-of-concept federated workflow tha
 
 2. Can a graph neural network combine genomic and proteomic information to identify disease-related phenotype clusters?
 
-3. Can a graph neural network trained across multiple institutions predict clinically outcomes without transferring individual-level data?
+3. [Aspirational:] Can a graph neural network trained across multiple institutions predict clinical outcomes without transferring individual-level data?
 
 ### Brief flowchart
 
@@ -37,13 +35,18 @@ The demo will integrate haplotype information, gene information, and proteomics.
 
 ### Required Datasets
 
+We build upon the work of previous hackathons, documented at <haploblocks.org>
+From there, we leverage a graph that encodes how haploblock clusters co-occur across individuals
+
+![Haploblock co-occurrence graph](https://haploblocks.org/figures/haploblock_co_occurence_graph.png)
+
+
 1. **Haploblock BED file**
 
    Defines the genomic coordinates and identifiers of the predefined haploblocks on chromosome 22.
 
-2. **Participant-level haploblock hashes**
-
-   Within each haploblock, an individual's haploblock hashes will be represented. These hashes provide compact identifiers that allow haplotype patterns to be compared across participants.
+   Within each haploblock, an individual's haploblock hashes will be represented (we build upon the ideas and data output from the [HaploBlock HPC pipeline project](https://github.com/MauricioMoldes/haploblocks-hpc)). These hashes provide compact identifiers that allow haplotype patterns to be compared across participants.
+   Each node represents a **haploblock cluster**, i.e. haploblocks with similar genetic variants across multiple individuals.
 
 3. **Gene BED file**
 
@@ -55,7 +58,7 @@ The demo will integrate haplotype information, gene information, and proteomics.
 
 5. **Proteomic data**
 
-   Contains participant-level abundance measurements for proteins encoded by genes located on chromosome 22.
+   Proteomic data for proteins encoded by genes located on chromosome 22.
 
 
 ### Data Integration
@@ -66,13 +69,12 @@ The integrated graph will represent relationships among participants, haplotype 
 flowchart LR
     P["Participant"] --> H["Haploblock hash"]
     H --> B["Haploblock"]
-    B --> G["Overlapping gene"]
-    G --> R["Encoded protein"]
+    B --> R["Encoded protein"]
     P --> A["Measured protein abundance"]
     R --> A
 ```
 
-For example, the graph may represent that a participant carries a particular haplotype pattern within a chromosome 22 haploblock, that the haploblock overlaps a gene, that the gene encodes a particular protein, and that the participant has a measured abundance value for that protein.
+For example, the graph may represent that a participant carries a particular haplotype pattern within a chromosome 22 haploblock, that the gene encodes a particular protein, and that the participant has a measured abundance value for that protein.
 
 
 ## Team members
