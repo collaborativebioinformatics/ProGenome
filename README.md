@@ -62,7 +62,27 @@ From there, we leverage a graph that encodes how haploblock clusters co-occur ac
 
 5. **Proteomic data**
 
-   Proteomic data for proteins encoded by genes located on chromosome 22.
+   Proteomic data for proteins encoded by genes located on chromosome 22.*
+
+   Before connecting to the real genomic haploblock graph, we built a synthetic proteomics dataset to validate our data structure and analysis pipeline end-to-end.
+
+   **What we generated:**
+   - Protein intensity values (log2 scale) for all ~460 unique proteins encoded by genes on chromosome 22
+   - 3 simulated hospital sites, 40 patients each (120 patients total)
+   - For every patient: age, sex, and a binary phenotype (case/control)
+   - A deliberately injected signal: each protein's intensity depends, to varying degrees, on the patient's age, sex, and phenotype — some proteins strongly, most only weakly, to mimic real biological heterogeneity
+   
+   This lets us check whether our analysis can actually recover a known signal before applying it to real data later on.
+   
+   **Result:** the injected phenotype effect is clearly recoverable, and consistent across all 3 simulated sites:
+   
+   ![Protein intensity by phenotype and site](proteomics/plots/top_phenotype_protein_boxplot.png)
+   
+   A broader view across the 40 proteins most influenced by age/sex/phenotype shows visible structure separating the two phenotype groups:
+   
+   ![Heatmap of top signal proteins](proteomics/plots/proteomics_heatmap_top_signal.png)
+   
+   This confirms the proteomics side of the pipeline behaves as expected, and gives us matched patient-level data (age, sex, phenotype, protein intensities) ready to be connected to the genomic haploblock hashes.
 
 
 ### Data Integration
