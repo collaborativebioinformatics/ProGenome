@@ -1,0 +1,10 @@
+site,n,accuracy,balanced_accuracy,f1,roc_auc,model
+site1,40,1.0,1.0,1.0,1.0,proteomics
+site2,40,1.0,1.0,1.0,1.0,proteomics
+site3,40,1.0,1.0,1.0,1.0,proteomics
+site1,40,1.0,1.0,1.0,1.0,proteomics_covariates
+site2,40,1.0,1.0,1.0,1.0,proteomics_covariates
+site3,40,1.0,1.0,1.0,1.0,proteomics_covariates
+site1,40,1.0,1.0,1.0,1.0,proteomics_covariates_haplograph
+site2,40,1.0,1.0,1.0,1.0,proteomics_covariates_haplograph
+site3,40,1.0,1.0,1.0,1.0,proteomics_covariates_haplograph
