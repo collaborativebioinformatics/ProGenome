@@ -11,7 +11,7 @@ Genome Graph is a tool for displaying genome-wide data sets. The genome contains
 
 ## 2. 🎯 Our Mission
 
-The mission of ProGenome is to develop a proof-of-concept federated workflow that integrates known genome-graph with proteomics. Each participating institution retains its individual-level data locally and trains the same graph-based model. Only model updates are exchanged with a coordinating server, which aggregates them into a shared model and returns the updated parameters for the next training round.
+The mission of ProGenome is to develop a proof-of-concept workflow that integrates known genome-graph with proteomics, with a federated approach in mind where each participating institution retains its individual-level data locally and trains the same graph-based model. Only model updates are exchanged with a coordinating server, which aggregates them into a shared model and returns the updated parameters for the next training round.
 
 
 ### Research Questions
@@ -20,7 +20,7 @@ The mission of ProGenome is to develop a proof-of-concept federated workflow tha
 
 2. Can a graph neural network combine genomic and proteomic information to identify disease-related phenotype clusters?
 
-3. Can a graph neural network trained across multiple institutions predict clinically outcomes without transferring individual-level data?
+3. [Aspirational:] Can a graph neural network trained across multiple institutions predict clinical outcomes without transferring individual-level data?
 
 ### Brief flowchart
 
@@ -34,6 +34,12 @@ The initial proof-of-concept demonstration will focus on chromosome 22, a test c
 The demo will integrate haplotype information, gene information, and proteomics.
 
 ### Required Datasets
+
+We build upon the work of previous hackathons, documented at <haploblocks.org>
+From there, we leverage a graph that encodes how haploblock clusters co-occur across individuals
+
+![Haploblock co-occurrence graph](https://haploblocks.org/figures/haploblock_co_occurence_graph.png)
+
 
 1. **Haploblock BED file**
 
