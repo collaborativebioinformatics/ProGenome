@@ -46,16 +46,17 @@ From there, we leverage a graph that encodes how haploblock clusters co-occur ac
    Defines the genomic coordinates and identifiers of the predefined haploblocks on chromosome 22.
 
    Within each haploblock, an individual's haploblock hashes will be represented (we build upon the ideas and data output from the [HaploBlock HPC pipeline project](https://github.com/MauricioMoldes/haploblocks-hpc)). These hashes provide compact identifiers that allow haplotype patterns to be compared across participants.
+   Each node represents a **haploblock cluster**, i.e. haploblocks with similar genetic variants across multiple individuals.
 
-2. **Gene BED file**
+3. **Gene BED file**
 
    Defines the genomic coordinates of genes located on chromosome 22. Genomic-coordinate overlap will be used to determine which genes fall within or overlap each haploblock.
 
-3. **Gene-to-protein mapping**
+4. **Gene-to-protein mapping**
 
    Connects chromosome 22 genes to their corresponding protein identifiers.
 
-4. **Proteomic data**
+5. **Proteomic data**
 
    Proteomic data for proteins encoded by genes located on chromosome 22.
 
