@@ -41,21 +41,19 @@ The demo will integrate haplotype information, gene information, and proteomics.
 
    Defines the genomic coordinates and identifiers of the predefined haploblocks on chromosome 22.
 
-2. **Participant-level haploblock hashes**
+   Within each haploblock, an individual's haploblock hashes will be represented (link and example needed). These hashes provide compact identifiers that allow haplotype patterns to be compared across participants.
 
-   Within each haploblock, an individual's haploblock hashes will be represented. These hashes provide compact identifiers that allow haplotype patterns to be compared across participants.
-
-3. **Gene BED file**
+2. **Gene BED file**
 
    Defines the genomic coordinates of genes located on chromosome 22. Genomic-coordinate overlap will be used to determine which genes fall within or overlap each haploblock.
 
-4. **Gene-to-protein mapping**
+3. **Gene-to-protein mapping**
 
    Connects chromosome 22 genes to their corresponding protein identifiers.
 
-5. **Proteomic data**
+4. **Proteomic data**
 
-   Contains participant-level abundance measurements for proteins encoded by genes located on chromosome 22.
+   Proteomic data for proteins encoded by genes located on chromosome 22.
 
 
 ### Data Integration
@@ -66,13 +64,12 @@ The integrated graph will represent relationships among participants, haplotype 
 flowchart LR
     P["Participant"] --> H["Haploblock hash"]
     H --> B["Haploblock"]
-    B --> G["Overlapping gene"]
-    G --> R["Encoded protein"]
+    B --> R["Encoded protein"]
     P --> A["Measured protein abundance"]
     R --> A
 ```
 
-For example, the graph may represent that a participant carries a particular haplotype pattern within a chromosome 22 haploblock, that the haploblock overlaps a gene, that the gene encodes a particular protein, and that the participant has a measured abundance value for that protein.
+For example, the graph may represent that a participant carries a particular haplotype pattern within a chromosome 22 haploblock, that the gene encodes a particular protein, and that the participant has a measured abundance value for that protein.
 
 
 ## Team members
