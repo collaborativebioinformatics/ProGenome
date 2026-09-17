@@ -34,6 +34,12 @@ library(magrittr)
 ```{r}
 phenotypes <- fread("https://data.haploblocks.org/haplograph/1000G/phenotypes_real.csv")
 edges_chr2 <- fread("https://data.haploblocks.org/haplograph/1000G/chr22/edges_lift_above_threshold.csv.gz")
+head(edges_chr2)
+```
+
+I'm just going to use the edge information to derive the genomic regions of the haploblocks represented with edges in the co-occurrence graph
+
+```{r}
 haplos_chr22 <- edges_chr2[, 1]
 haplos_chr22[, chr := "chr22"]
 haplos_chr22[, start := gsub("chr22_([0-9]+)-.+", "\\1", source) %>% as.integer()]
@@ -42,8 +48,10 @@ haplos_chr22[, length:= end-start]
 ## turn into data.table's closed interval format
 haplos_chr22[, start := start+1L]
 haplos_chr22 <- haplos_chr22[, .(chr, start, end, length)] %>% unique
-
+head(haplos_chr22)
 ```
+
+Each row now represents one haploblock on chromosome 22 that is part of the co-occurrence graph
 
 Haploblock lengths
 
@@ -54,6 +62,8 @@ ggplot(haplos_chr22, aes(x = log10(length))) +
 ```
 
 ## Genes of chr22
+
+Gene coordinates were downloaded from the UCSC Browser
 
 ```{r}
 genes_chr22 <- fread("/Users/friederikeduendar/Documents/ProGenome/proteomics/uniprot_chr22.bed")
