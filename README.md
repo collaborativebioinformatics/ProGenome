@@ -3,16 +3,13 @@
 
 Genomics = variant-based phenotype-propensity reference graph to be combined with patient-specific proteomics data --> what can we learn by integrating these?
 
-
-## 1. Background & Gap
-
-Genome Graph is a tool for displaying genome-wide data sets. The genome contains the relatively stable genetic blueprint of an individual, whereas the proteome captures what's happening in cells now. Protein abundance and function can change in response to disease, treatment, environmental exposure, and physiological stress. Furthermore, one gene may give rise to multiple protein products through alternative splicing and post-translational modifications, making the proteome highly complex. In addition, pooling individual-level genomic, proteomic, and clinical data from different institutions can be restricted.
-
-
-## 2. 🎯 Our Mission
+## 🎯 Our Mission
 
 The mission of ProGenome is to develop a proof-of-concept workflow that integrates known genome-graph with proteomics, with a federated approach in mind where each participating institution retains its individual-level data locally and trains the same graph-based model. Only model updates are exchanged with a coordinating server, which aggregates them into a shared model and returns the updated parameters for the next training round.
 
+## Background & Gap
+
+Genome Graph is a tool for displaying genome-wide data sets. The genome contains the relatively stable genetic blueprint of an individual, whereas the proteome captures what's happening in cells now. Protein abundance and function can change in response to disease, treatment, environmental exposure, and physiological stress. Furthermore, one gene may give rise to multiple protein products through alternative splicing and post-translational modifications, making the proteome highly complex. In addition, pooling individual-level genomic, proteomic, and clinical data from different institutions can be restricted.
 
 ### Research Questions
 
@@ -26,8 +23,7 @@ The mission of ProGenome is to develop a proof-of-concept workflow that integrat
 
 <img width="711" height="384" alt="image" src="https://github.com/user-attachments/assets/fc0c51d3-af4f-4afe-bfbb-a674b07fac2c" />
 
-
-## 3. Demo
+## Quick Start
 
 The initial proof-of-concept demonstration will focus on chromosome 22, a test case before extending the workflow to additional chromosomes or the whole genome.
 
@@ -83,7 +79,6 @@ From there, we leverage a graph that encodes how haploblock clusters co-occur ac
    ![Heatmap of top signal proteins](proteomics/plots/proteomics_heatmap_top_signal.png)
    
    This confirms the proteomics side of the pipeline behaves as expected, and gives us matched patient-level data (age, sex, phenotype, protein intensities) ready to be connected to the genomic haploblock hashes.
-
 
 ### Data Integration
 
