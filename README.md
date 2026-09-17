@@ -7,10 +7,12 @@ Genomics = variant-based phenotype-propensity reference graph to be combined wit
 
 The mission of ProGenome is to develop a proof-of-concept workflow that integrates known genome-graph with proteomics, with a federated approach in mind where each participating institution retains its individual-level data locally and trains the same graph-based model. Only model updates are exchanged with a coordinating server, which aggregates them into a shared model and returns the updated parameters for the next training round.
 
+---
 ## Background & Gap
 
 Genome Graph is a tool for displaying genome-wide data sets. The genome contains the relatively stable genetic blueprint of an individual, whereas the proteome captures what's happening in cells now. Protein abundance and function can change in response to disease, treatment, environmental exposure, and physiological stress. Furthermore, one gene may give rise to multiple protein products through alternative splicing and post-translational modifications, making the proteome highly complex. In addition, pooling individual-level genomic, proteomic, and clinical data from different institutions can be restricted.
 
+---
 ### Research Questions
 
 1. How can haploblock-based genomic information be connected to genes and proteomic data in a graph-based data model?
@@ -23,7 +25,8 @@ Genome Graph is a tool for displaying genome-wide data sets. The genome contains
 
 <img width="711" height="384" alt="image" src="https://github.com/user-attachments/assets/fc0c51d3-af4f-4afe-bfbb-a674b07fac2c" />
 
-## Quick Start
+---
+## 🚀 Quick Start (Demo)
 
 The initial proof-of-concept demonstration will focus on chromosome 22, a test case before extending the workflow to additional chromosomes or the whole genome.
 
@@ -95,7 +98,7 @@ flowchart LR
 
 For example, the graph may represent that a participant carries a particular haplotype pattern within a chromosome 22 haploblock, that the gene encodes a particular protein, and that the participant has a measured abundance value for that protein.
 
-
+---
 ## Team members
 
 - Friederike Duendar
