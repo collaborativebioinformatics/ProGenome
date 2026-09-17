@@ -9,7 +9,7 @@ Genomics = variant-based phenotype-propensity reference graph to be combined wit
 Genome Graph is a tool for displaying genome-wide data sets. The genome contains the relatively stable genetic blueprint of an individual, whereas the proteome captures what's happening in cells now. Protein abundance and function can change in response to disease, treatment, environmental exposure, and physiological stress. Furthermore, one gene may give rise to multiple protein products through alternative splicing and post-translational modifications, making the proteome highly complex. In addition, pooling individual-level genomic, proteomic, and clinical data from different institutions can be restricted.
 
 
-## 2. Our Mission
+## 2. 🎯 Our Mission
 
 The mission of ProGenome is to develop a proof-of-concept federated workflow that integrates known genome-graph with proteomics. Each participating institution retains its individual-level data locally and trains the same graph-based model. Only model updates are exchanged with a coordinating server, which aggregates them into a shared model and returns the updated parameters for the next training round.
 
@@ -39,7 +39,7 @@ The demo will integrate haplotype information, gene information, and proteomics.
 
    Defines the genomic coordinates and identifiers of the predefined haploblocks on chromosome 22.
 
-   Within each haploblock, an individual's haploblock hashes will be represented (link and example needed). These hashes provide compact identifiers that allow haplotype patterns to be compared across participants.
+   Within each haploblock, an individual's haploblock hashes will be represented (we build upon the ideas and data output from the [HaploBlock HPC pipeline project](https://github.com/MauricioMoldes/haploblocks-hpc)). These hashes provide compact identifiers that allow haplotype patterns to be compared across participants.
 
 2. **Gene BED file**
 
