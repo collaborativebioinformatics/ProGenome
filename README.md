@@ -6,12 +6,10 @@ Genomics = variant-based phenotype-propensity reference graph to be combined wit
 
 ## 1. Background & Gap
 
-Genome Graph is a tool for displaying genome-wide data sets. The genome contains the relatively stable genetic blueprint of an individual, whereas the proteome captures what's happening in cells now. Protein abundance and function can change in response to disease, treatment, environmental exposure, and physiological stress. Furthermore, one gene may give rise to multiple protein products through alternative splicing and post-translational modifications, making the proteome highly complex.
-
-Although genome graphs can describe genetic variation, they do not by themselves indicate which molecular processes are active. Proteomic datasets provide complementary functional information, but they are high-dimensional and often distributed across hospitals and research institutions. Pooling individual-level genomic, proteomic, and clinical data in a single location can be restricted.
+Genome Graph is a tool for displaying genome-wide data sets. The genome contains the relatively stable genetic blueprint of an individual, whereas the proteome captures what's happening in cells now. Protein abundance and function can change in response to disease, treatment, environmental exposure, and physiological stress. Furthermore, one gene may give rise to multiple protein products through alternative splicing and post-translational modifications, making the proteome highly complex. In addition, pooling individual-level genomic, proteomic, and clinical data from different institutions can be restricted.
 
 
-## 2. ProGenome Mission
+## 2. Our Mission
 
 The mission of ProGenome is to develop a proof-of-concept federated workflow that integrates known genome-graph with proteomics. Each participating institution retains its individual-level data locally and trains the same graph-based model. Only model updates are exchanged with a coordinating server, which aggregates them into a shared model and returns the updated parameters for the next training round.
 
