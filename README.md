@@ -33,6 +33,10 @@ The initial proof-of-concept demonstration will focus on chromosome 22, a test c
 
 The demo will integrate haplotype information, gene information, and proteomics.
 
+### Sept 17 workflow 
+
+![](docs/haplograph_baseline_model_schema.png)
+
 ### Required Datasets
 
 We build upon the work of previous hackathons, documented at <haploblocks.org>
