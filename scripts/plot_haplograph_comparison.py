@@ -42,6 +42,17 @@ def draw_haplograph(edges: pd.DataFrame, output: Path, max_nodes: int) -> None:
         edge_color=lifts, edge_cmap=plt.cm.viridis, edge_vmin=norm.vmin, edge_vmax=norm.vmax,
         alpha=0.55, ax=ax,
     )
+    nx.draw_networkx_labels(
+        graph, positions,
+        labels={node: node for node in graph},
+        font_size=5, bbox={"alpha": 0.6, "color": "white", "pad": 0.2}, ax=ax,
+    )
+    nx.draw_networkx_edge_labels(
+        graph, positions,
+        edge_labels={(left, right): f"w={data['weight']:.0f}; l={data['lift']:.1f}"
+                     for left, right, data in graph.edges(data=True)},
+        font_size=4, rotate=False, label_pos=0.5, bbox={"alpha": 0.7, "color": "white", "pad": 0.1}, ax=ax,
+    )
     ax.set_title(f"Haplograph: top {len(selected)} nodes by degree\n(edge width = log weight; edge color = lift)")
     ax.axis("off")
     fig.colorbar(plt.cm.ScalarMappable(norm=norm, cmap="viridis"), ax=ax, label="Lift")
@@ -89,6 +100,21 @@ def draw_combined(edges: pd.DataFrame, graph_features: pd.DataFrame, output: Pat
                            width=0.5, alpha=0.35, ax=ax)
     nx.draw_networkx_edges(graph, positions, edgelist=cooccurrence, edge_color="#d55e00",
                            width=1.2, alpha=0.5, ax=ax)
+    nx.draw_networkx_labels(
+        graph, positions,
+        labels={node: node[2:] for node in graph},
+        font_size=5, bbox={"alpha": 0.65, "color": "white", "pad": 0.2}, ax=ax,
+    )
+    edge_labels = {}
+    for left, right, data in graph.edges(data=True):
+        if data["relation"] == "co_occurs":
+            edge_labels[(left, right)] = f"w={data['weight']:.0f}; l={data['lift']:.1f}"
+        else:
+            edge_labels[(left, right)] = "contains"
+    nx.draw_networkx_edge_labels(
+        graph, positions, edge_labels=edge_labels, font_size=4, rotate=False,
+        label_pos=0.5, bbox={"alpha": 0.7, "color": "white", "pad": 0.1}, ax=ax,
+    )
     ax.set_title("Integrated haploblock–protein network\nprotein color = phenotype 1 minus phenotype 0 expression")
     ax.legend(frameon=False)
     ax.axis("off")
@@ -138,8 +164,8 @@ def main() -> int:
     parser.add_argument("--graph-features", type=Path, default=Path("federated_data/graph_protein_features.csv"))
     parser.add_argument("--coefficients", type=Path, default=Path("proteomics/logistic_regression_results/model_coefficients.csv"))
     parser.add_argument("--output-dir", type=Path, default=Path("proteomics/graph_comparison"))
-    parser.add_argument("--max-nodes", type=int, default=120)
-    parser.add_argument("--max-blocks", type=int, default=35)
+    parser.add_argument("--max-nodes", type=int, default=60)
+    parser.add_argument("--max-blocks", type=int, default=20)
     args = parser.parse_args()
     args.output_dir.mkdir(parents=True, exist_ok=True)
     edges = read_edges(args.edges)
