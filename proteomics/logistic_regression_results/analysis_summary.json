@@ -1,0 +1,28 @@
+{
+  "n_samples": 4000,
+  "n_train": 3200,
+  "n_test": 800,
+  "class_counts": {
+    "0": 2363,
+    "1": 1637
+  },
+  "filter_thresholds": {
+    "min_detection": 0.8,
+    "min_median_log2_expression": 6.0,
+    "min_variance": 0.01,
+    "max_absolute_correlation": 0.8
+  },
+  "filter_counts": {
+    "input": 460,
+    "after_detection_median_variance": 460,
+    "after_correlation": 460
+  },
+  "test_metrics": {
+    "accuracy": 0.855,
+    "balanced_accuracy": 0.8476443547917838,
+    "precision": 0.832807570977918,
+    "recall": 0.8073394495412844,
+    "f1": 0.8198757763975155,
+    "roc_auc": 0.9325988711523169
+  }
+}

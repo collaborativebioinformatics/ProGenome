@@ -93,6 +93,22 @@ flowchart LR
     R --> A
 ```
 
+### Reproducible proteomics analysis
+
+The new 4,000-sample synthetic matrices can be analyzed with:
+
+```bash
+python scripts/analyze_proteomics.py
+python scripts/build_knowledge_graph.py
+```
+
+The analysis writes filtered-protein lists, five-fold cross-validation and
+held-out test metrics, confusion-matrix and coefficient figures to
+`proteomics/logistic_regression_results/`. The graph script writes node/edge
+tables and a top-protein visualization to `proteomics/knowledge_graph/`.
+Pass `--edges path/to/edges_lift_above_threshold_uniprot.csv.gz` to the graph
+script when the annotated haplograph edge file is available.
+
 For example, the graph may represent that a participant carries a particular haplotype pattern within a chromosome 22 haploblock, that the gene encodes a particular protein, and that the participant has a measured abundance value for that protein.
 
 ---
