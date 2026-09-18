@@ -43,7 +43,7 @@ def plot_individuals(emb: np.ndarray, ind: pd.DataFrame, title: str, out: Path) 
     import matplotlib; matplotlib.use("Agg")
     import matplotlib.pyplot as plt
     xy = PCA(n_components=2, random_state=0).fit_transform(emb)
-    fig, axes = plt.subplots(1, 2, figsize=(11, 4.8))
+    fig, axes = plt.subplots(1, 2, figsize=(12, 5.2))
     for ax, (column, colours, label) in zip(axes, [("ancestry", ANCESTRY_COLOURS, "ancestry"), ("sex", SEX_COLOURS, "sex (control)")]):
         values = ind[column].fillna("unlabelled")
         for name, colour in list(colours.items()) + [("unlabelled", "#bbbbbb")]:
@@ -51,22 +51,22 @@ def plot_individuals(emb: np.ndarray, ind: pd.DataFrame, title: str, out: Path) 
             if m.any():
                 ax.scatter(xy[m, 0], xy[m, 1], s=7, color=colour, label=f"{name} ({m.sum()})", alpha=0.75, linewidths=0)
         ax.set_title(f"{title} - coloured by {label}"); ax.set_xlabel("PC1"); ax.set_ylabel("PC2")
-        ax.legend(frameon=False, markerscale=2, fontsize=8)
-    fig.tight_layout(); fig.savefig(out, dpi=150); plt.close(fig)
+        ax.legend(frameon=False, markerscale=2, fontsize=8, loc="upper center", bbox_to_anchor=(0.5, -0.14), ncol=3)   # below the axes, never on the points
+    fig.tight_layout(); fig.savefig(out, dpi=150, bbox_inches="tight"); plt.close(fig)
 
 
 def plot_clusters(emb: np.ndarray, assoc: pd.DataFrame, title: str, out: Path) -> None:
     import matplotlib; matplotlib.use("Agg")
     import matplotlib.pyplot as plt
     xy = PCA(n_components=2, random_state=0).fit_transform(emb)
-    fig, ax = plt.subplots(figsize=(6.5, 5.2))
+    fig, ax = plt.subplots(figsize=(7, 5.8))
     strong = assoc["ancestry_cramers_v"].to_numpy() >= 0.3
     ax.scatter(xy[~strong, 0], xy[~strong, 1], s=4, color="#cccccc", label="weakly ancestry-associated (V<0.3)", linewidths=0)
     for name, colour in ANCESTRY_COLOURS.items():
         m = strong & (assoc["ancestry_dominant"].to_numpy() == name)
         ax.scatter(xy[m, 0], xy[m, 1], s=6, color=colour, label=f"enriched in {name} ({m.sum()})", alpha=0.8, linewidths=0)
-    ax.set_title(title); ax.set_xlabel("PC1"); ax.set_ylabel("PC2"); ax.legend(frameon=False, markerscale=2, fontsize=8)
-    fig.tight_layout(); fig.savefig(out, dpi=150); plt.close(fig)
+    ax.set_title(title); ax.set_xlabel("PC1"); ax.set_ylabel("PC2"); ax.legend(frameon=False, markerscale=2, fontsize=8, loc="upper center", bbox_to_anchor=(0.5, -0.12), ncol=2)
+    fig.tight_layout(); fig.savefig(out, dpi=150, bbox_inches="tight"); plt.close(fig)
 
 
 def main() -> int:

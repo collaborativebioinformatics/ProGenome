@@ -180,7 +180,7 @@ def main() -> int:
         ax.set_ylabel("clusters")
         ax.set_title(f"{args.chrom}: how strongly each haploblock cluster tracks a phenotype")
         ax.legend(frameon=False)
-        fig.tight_layout(); fig.savefig(out_dir / "cramers_v_by_phenotype.png", dpi=150); plt.close(fig)
+        fig.tight_layout(); fig.savefig(out_dir / "cramers_v_by_phenotype.png", dpi=150, bbox_inches="tight"); plt.close(fig)
 
         fig, ax = plt.subplots(figsize=(9, 3.6))
         pb = per_block.dropna(subset=["max_ancestry_v"])
@@ -189,8 +189,8 @@ def main() -> int:
         ax.scatter(mid, pb["max_sex_v"], s=10, color=colours["sex"], alpha=0.7, label="sex (negative control)")
         ax.set_xlabel(f"{args.chrom} position (Mb)"); ax.set_ylabel("max Cramér's V per block")
         ax.set_title("Where along the chromosome the haploblock graph tracks ancestry")
-        ax.legend(frameon=False, loc="upper right")
-        fig.tight_layout(); fig.savefig(out_dir / "informativeness_along_chromosome.png", dpi=150); plt.close(fig)
+        ax.legend(frameon=False, loc="upper center", bbox_to_anchor=(0.5, -0.22), ncol=2)      # below the axes, never on the points
+        fig.tight_layout(); fig.savefig(out_dir / "informativeness_along_chromosome.png", dpi=150, bbox_inches="tight"); plt.close(fig)
 
         fig, ax = plt.subplots(figsize=(7, 4))
         bins = np.linspace(-1, 1, 50)
@@ -198,8 +198,8 @@ def main() -> int:
         ax.hist(cos_real, bins=bins, alpha=0.7, color=colours["ancestry"], label=f"lift edges (mean {edge['profile_cosine_real_mean']:.2f})")
         ax.set_xlabel("cosine similarity of endpoint ancestry profiles"); ax.set_ylabel("edges")
         ax.set_title("Co-occurring clusters share ancestry profiles")
-        ax.legend(frameon=False)
-        fig.tight_layout(); fig.savefig(out_dir / "edge_ancestry_similarity.png", dpi=150); plt.close(fig)
+        ax.legend(frameon=False, loc="upper left")
+        fig.tight_layout(); fig.savefig(out_dir / "edge_ancestry_similarity.png", dpi=150, bbox_inches="tight"); plt.close(fig)
 
     print(json.dumps(summary, indent=2, default=float))
     print("\nTop ancestry-informative clusters:")
