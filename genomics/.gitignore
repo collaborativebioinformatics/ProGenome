@@ -1,0 +1,9 @@
+__pycache__/
+.pytest_cache/
+.venv/
+*.pyc
+# downloaded inputs (re-fetch with fetch_data.sh) and generated outputs
+data/
+outputs_brev/
+outputs/
+.env

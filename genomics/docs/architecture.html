@@ -1,0 +1,330 @@
+<meta charset="utf-8">
+<title>ProGenome Architecture</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --ground: #F4F7F6; --surface: #FFFFFF; --ink: #17232A; --muted: #5B6B72; --line: #C7D2D6; --faint: #E4EAEC;
+    --genome: #0E7C7B; --genome-soft: #D9EFEE; --proteome: #B26A0C; --proteome-soft: #F6E7CF; --private: #7A5AF8;
+    --display: "Barlow Condensed", "Arial Narrow", Impact, sans-serif;
+    --body: "Source Sans 3", "Segoe UI", Helvetica, Arial, sans-serif;
+    --mono: "JetBrains Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #0F1719; --surface: #16222A; --ink: #E5ECEC; --muted: #97A7AC; --line: #33454B; --faint: #1E2C33;
+      --genome: #3ED2C1; --genome-soft: #123A3A; --proteome: #F0B25A; --proteome-soft: #3E2E12; --private: #A78BFA;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #0F1719; --surface: #16222A; --ink: #E5ECEC; --muted: #97A7AC; --line: #33454B; --faint: #1E2C33;
+    --genome: #3ED2C1; --genome-soft: #123A3A; --proteome: #F0B25A; --proteome-soft: #3E2E12; --private: #A78BFA;
+    color-scheme: dark;
+  }
+  body { margin: 0; background: var(--ground); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.5; padding-inline: 20px; padding-block: 32px 56px; }
+  .wrap { max-width: 1180px; margin: 0 auto; display: grid; gap: 40px; }
+  header { display: grid; gap: 10px; }
+  .eyebrow { font-family: var(--display); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; font-size: 13px; color: var(--muted); }
+  h1 { font-family: var(--display); font-weight: 700; font-size: 44px; line-height: 1; margin: 0; letter-spacing: 0.01em; text-wrap: balance; }
+  h2 { font-family: var(--display); font-weight: 600; font-size: 24px; margin: 0; letter-spacing: 0.02em; }
+  p { margin: 0; max-width: 68ch; }
+  .thesis { font-size: 18px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px 14px; font-family: var(--mono); font-size: 12px; color: var(--muted); }
+  .chips b { color: var(--ink); font-weight: 500; }
+  figure { margin: 0; display: grid; gap: 10px; }
+  .scroller { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); padding: 12px; }
+  svg { display: block; max-width: 100%; height: auto; min-width: 760px; }
+  svg text { font-family: var(--body); font-size: 12px; fill: currentColor; }
+  svg .mono { font-family: var(--mono); font-size: 11px; }
+  svg .stage { font-family: var(--display); font-weight: 600; font-size: 13px; letter-spacing: 0.08em; }
+  svg .title { font-weight: 600; font-size: 13px; }
+  svg .lbl { font-size: 11px; fill: var(--muted); }
+  figcaption { font-size: 14px; color: var(--muted); max-width: 90ch; }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 13px; color: var(--muted); }
+  .legend span::before { content: ""; display: inline-block; width: 22px; height: 0; border-top: 3px solid var(--line); vertical-align: middle; margin-right: 6px; }
+  .legend .g::before { border-color: var(--genome); } .legend .p::before { border-color: var(--proteome); }
+  .legend .d::before { border-top-style: dashed; border-color: var(--private); }
+  .two { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 28px 40px; align-items: start; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; }
+  th, td { text-align: left; vertical-align: top; padding: 8px 10px 8px 0; border-bottom: 1px solid var(--faint); }
+  th { font-family: var(--display); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; font-size: 12px; color: var(--muted); }
+  td code, .chips code, footer code, figcaption code { font-family: var(--mono); font-size: 12.5px; }
+  td.num, th.num { font-variant-numeric: tabular-nums; text-align: right; padding-right: 0; white-space: nowrap; }
+  .status { display: inline-block; font-family: var(--display); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; padding: 1px 7px; border: 1px solid var(--line); border-radius: 3px; color: var(--muted); }
+  .status.done { border-color: var(--genome); color: var(--genome); }
+  .status.next { border-color: var(--proteome); color: var(--proteome); }
+  .timings { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px 28px; }
+  .t { display: grid; gap: 2px; padding-top: 10px; border-top: 2px solid var(--line); }
+  .t .k { font-family: var(--display); font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+  .t .v { font-size: 26px; font-family: var(--display); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .t .s { font-size: 13px; color: var(--muted); }
+  footer { font-size: 13px; color: var(--muted); max-width: 90ch; }
+  @media (max-width: 480px) { h1 { font-size: 34px; } body { font-size: 15px; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">ProGenome · Team #3 · Nordic Biobank × NVIDIA hackathon · branch <code>modelling</code></div>
+    <h1>ProGenome Architecture</h1>
+    <p class="thesis">One knowledge graph joins the public 1000 Genomes haploblock graph to per-site proteomics on the sample ID; a PyTorch Geometric GNN encodes it, an LLM decodes it, and only model weights ever cross a site boundary.</p>
+    <div class="chips">
+      <span><b>chr22</b> demo</span><span><b>2,548</b> individuals · <b>6,551</b> clusters · <b>669</b> blocks</span>
+      <span><b>2.37 M</b> CARRIES · <b>187 k</b> CO_OCCURS</span><span><b>458</b> genes · <b>460</b> proteins · <b>1.07 M</b> MEASURED</span>
+      <span>data: <code>data.haploblocks.org</code></span>
+    </div>
+  </header>
+
+  <figure>
+    <h2>Data flow: two lanes into one graph, one encoder, one decoder</h2>
+    <div class="scroller">
+      <svg viewBox="0 0 1370 600" role="img" aria-label="Genome sources and per-site proteomics are built into one PyG knowledge graph joined on the 1000 Genomes sample ID, embedded by SVD or Node2Vec, encoded by a two-layer heterogeneous GNN with phenotype and proteome heads, served through torch.compile or TensorRT, and decoded by a GraphRAG LLM into insights.">
+        <defs>
+          <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker>
+          <marker id="ar-g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--genome)"/></marker>
+          <marker id="ar-p" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--proteome)"/></marker>
+        </defs>
+        <g class="stage" fill="var(--muted)">
+          <text x="20" y="24">SOURCES</text><text x="280" y="24">GRAPH BUILD · SCHEMA</text><text x="540" y="24">EMBEDDINGS</text>
+          <text x="750" y="24">GNN · PyTorch Geometric</text><text x="1010" y="24">INFERENCE</text><text x="1190" y="24">DECODER</text>
+        </g>
+        <line x1="20" y1="34" x2="1350" y2="34" stroke="var(--line)"/>
+
+        <!-- genome lane: sources, build -->
+        <g stroke="var(--genome)" fill="var(--genome-soft)" stroke-width="1.5">
+          <rect x="20" y="60" width="230" height="104" rx="3"/>
+          <rect x="280" y="60" width="230" height="104" rx="3"/>
+          <rect x="540" y="60" width="180" height="50" rx="3"/>
+          <rect x="540" y="122" width="180" height="50" rx="3"/>
+        </g>
+        <text x="32" y="82" class="title">HaploGraph · 1000G · GRCh38</text>
+        <text x="32" y="102" class="mono">nodes.csv.gz  248,254 × 2,548</text>
+        <text x="32" y="118" class="mono">edges (lift ≥ 5)  187,030</text>
+        <text x="32" y="134" class="mono">block_stats · boundaries</text>
+        <text x="32" y="150" class="mono">phenotypes_real.csv (3 labels)</text>
+
+        <text x="292" y="82" class="title">build_kg.py → hetero.pt</text>
+        <text x="292" y="102" class="mono">pandas · scipy CSR int8 stream</text>
+        <text x="292" y="118" class="mono">Individual · Cluster · Block</text>
+        <text x="292" y="134" class="mono">CARRIES · CO_OCCURS · IN_BLOCK</text>
+        <text x="292" y="150" class="mono">NEXT_BLOCK · support ≥ 25</text>
+
+        <text x="552" y="80" class="title">SVD-32</text>
+        <text x="552" y="97" class="mono">scipy svds · shared space</text>
+        <text x="552" y="142" class="title">Node2Vec</text>
+        <text x="552" y="159" class="mono">pyg-lib random walks · GPU</text>
+
+        <!-- display outputs, fed from the build bus -->
+        <g stroke="var(--line)" fill="var(--surface)" stroke-width="1">
+          <rect x="540" y="196" width="180" height="44" rx="3"/>
+          <rect x="540" y="250" width="180" height="44" rx="3"/>
+        </g>
+        <text x="552" y="214" class="title">Neo4j 5.26 community</text>
+        <text x="552" y="230" class="mono">neo4j_load.py · :7474</text>
+        <text x="552" y="268" class="title">NetworkX · nx-cugraph</text>
+        <text x="552" y="284" class="mono">stats · GraphML · plots</text>
+
+        <!-- proteome lane -->
+        <g stroke="var(--proteome)" fill="var(--proteome-soft)" stroke-width="1.5">
+          <rect x="20" y="340" width="230" height="104" rx="3"/>
+          <rect x="280" y="340" width="230" height="104" rx="3"/>
+        </g>
+        <text x="32" y="362" class="title">Proteomics per site · 1000G IDs</text>
+        <text x="32" y="382" class="mono">uniprot_chr22.bed  460 proteins</text>
+        <text x="32" y="398" class="mono">site{1,2,3}_proteomics_log2.csv</text>
+        <text x="32" y="414" class="mono">synthetic + ground truth today</text>
+        <text x="32" y="430" class="mono">Wu 2013 · UKB-PPP pQTL next</text>
+
+        <text x="292" y="362" class="title">build_kg_v2.py → hetero_v2.pt</text>
+        <text x="292" y="382" class="mono">harmoniser: robust z / site</text>
+        <text x="292" y="398" class="mono">Gene · Protein · OVERLAPS</text>
+        <text x="292" y="414" class="mono">ENCODES · MEASURED {log2, z}</text>
+        <text x="292" y="430" class="mono">LOD missing → no edge</text>
+
+        <!-- source -> build -->
+        <g fill="none" stroke-width="1.6">
+          <line x1="250" y1="112" x2="278" y2="112" stroke="var(--genome)" marker-end="url(#ar-g)"/>
+          <line x1="250" y1="392" x2="278" y2="392" stroke="var(--proteome)" marker-end="url(#ar-p)"/>
+        </g>
+        <text x="222" y="52" class="lbl">fetch_data.sh</text>
+        <text x="222" y="332" class="lbl">measured_long</text>
+
+        <!-- join between lanes -->
+        <line x1="395" y1="164" x2="395" y2="338" stroke="currentColor" stroke-width="1.2" marker-end="url(#ar)"/>
+        <text x="403" y="255" class="lbl">joins on sample ID (HG00096 …)</text>
+
+        <!-- build -> embeddings -->
+        <g fill="none" stroke="var(--genome)" stroke-width="1.6" marker-end="url(#ar-g)">
+          <path d="M510,90 C522,90 522,85 538,85"/>
+          <path d="M510,134 C522,134 522,147 538,147"/>
+        </g>
+        <text x="516" y="52" class="lbl">carries.npz</text>
+
+        <!-- build bus: down at x=525, branches to display boxes and to the GNN -->
+        <g fill="none" stroke="var(--genome)" stroke-width="1.6">
+          <path d="M510,156 L525,156 L525,306 L748,306" marker-end="url(#ar-g)"/>
+          <path d="M525,218 L538,218" marker-end="url(#ar-g)"/>
+          <path d="M525,272 L538,272" marker-end="url(#ar-g)"/>
+        </g>
+        <text x="560" y="322" class="lbl">genome edges + cluster / block stats</text>
+        <!-- proteome -> GNN -->
+        <path d="M510,392 L532,392 L532,336 L748,336" fill="none" stroke="var(--proteome)" stroke-width="1.6" marker-end="url(#ar-p)"/>
+        <text x="560" y="352" class="lbl">measured · overlaps · encodes + z vector</text>
+        <!-- embeddings -> GNN -->
+        <g fill="none" stroke="var(--genome)" stroke-width="1.6" marker-end="url(#ar-g)">
+          <path d="M720,85 C734,85 734,110 748,110"/>
+          <path d="M720,147 C734,147 734,122 748,122"/>
+        </g>
+        <text x="724" y="56" class="lbl">32-dim init</text>
+
+        <!-- GNN -->
+        <rect x="750" y="60" width="230" height="300" rx="3" fill="var(--surface)" stroke="currentColor" stroke-width="1.5"/>
+        <text x="762" y="82" class="title">HeteroConv × 2 · hidden 64</text>
+        <text x="762" y="98" class="lbl">LayerNorm + residual · dropout 0.3</text>
+        <text x="762" y="120" class="lbl">SAGEConv (mean or sum)</text>
+        <text x="762" y="136" class="mono">carries · in_block · next_block</text>
+        <text x="762" y="152" class="mono">overlaps · encodes</text>
+        <text x="762" y="174" class="lbl">GraphConv, edge-weighted</text>
+        <text x="762" y="190" class="mono">co_occurs · w = log lift</text>
+        <text x="762" y="206" class="mono">measured · w = harmonised z</text>
+        <text x="762" y="228" class="lbl">individual input</text>
+        <text x="762" y="244" class="mono">SVD-32 | raw carriers (6,551)</text>
+        <text x="762" y="260" class="mono">+ protein z & mask (460 each)</text>
+        <text x="762" y="282" class="lbl">heads</text>
+        <text x="762" y="298" class="mono">phenotype: CE, class-weighted</text>
+        <text x="762" y="314" class="mono">proteome: masked MSE</text>
+        <text x="762" y="334" class="lbl">controls: sex (autosome), site (batch)</text>
+        <text x="762" y="350" class="lbl">Adam 5e-3 · early stop on val · seed 42</text>
+
+        <!-- inference -->
+        <rect x="1010" y="60" width="160" height="120" rx="3" fill="var(--surface)" stroke="currentColor" stroke-width="1.5"/>
+        <text x="1022" y="82" class="title">infer.py · CUDA</text>
+        <text x="1022" y="102" class="mono">eager          36 ms</text>
+        <text x="1022" y="118" class="mono">torch.compile 4.9 ms</text>
+        <text x="1022" y="134" class="mono">Torch-TensorRT fp16</text>
+        <text x="1022" y="152" class="lbl">per full graph · A100 80 GB</text>
+        <text x="1022" y="168" class="lbl">7.5× · logits identical</text>
+        <line x1="980" y1="120" x2="1008" y2="120" stroke="currentColor" stroke-width="1.6" marker-end="url(#ar)"/>
+        <text x="982" y="52" class="lbl">model.pt</text>
+
+        <!-- decoder -->
+        <rect x="1190" y="60" width="160" height="120" rx="3" fill="var(--surface)" stroke="currentColor" stroke-width="1.5"/>
+        <text x="1202" y="82" class="title">GraphRAG decoder</text>
+        <text x="1202" y="102" class="mono">KG neighbourhood +</text>
+        <text x="1202" y="118" class="mono">GNN logits + embeds</text>
+        <text x="1202" y="134" class="mono">→ NVIDIA NIM LLM</text>
+        <text x="1202" y="152" class="lbl">Nemotron / Llama endpoint</text>
+        <text x="1202" y="168" class="lbl">stretch: PyG G-Retriever</text>
+        <line x1="1170" y1="120" x2="1188" y2="120" stroke="currentColor" stroke-width="1.6" marker-end="url(#ar)"/>
+
+        <!-- run outputs -->
+        <rect x="1010" y="300" width="340" height="60" rx="3" fill="none" stroke="var(--line)" stroke-dasharray="4 3"/>
+        <text x="1022" y="320" class="title">outputs/ per run</text>
+        <text x="1022" y="336" class="mono">metrics.json · test_predictions.csv · history.csv</text>
+        <text x="1022" y="352" class="mono">embedding_individual.npy · embedding_cluster.npy</text>
+        <line x1="980" y1="330" x2="1008" y2="330" stroke="currentColor" stroke-width="1.6" marker-end="url(#ar)"/>
+
+        <!-- runtime band -->
+        <line x1="20" y1="480" x2="1350" y2="480" stroke="var(--line)"/>
+        <text x="20" y="502" class="stage" fill="var(--muted)">RUNTIME</text>
+        <text x="20" y="526" class="mono">docker  pytorch/pytorch:2.14.0-cuda12.6-cudnn9-runtime · torch_geometric 2.8.0 · pyg-lib · nx-cugraph · torch-tensorrt 2.14</text>
+        <text x="20" y="544" class="mono">compose neo4j:5.26-community + pipeline · Brev A100 80 GB (Crusoe, $1.98/h) · L4 24 GB (GCP, $0.85/h) · Mac M2 CPU ~10 min</text>
+        <text x="20" y="562" class="mono">make setup | run | docker | docker-run | neo4j-load | brev   ·   Makefile · setup.sh · run_all.sh · brev_deploy.sh · pytest</text>
+      </svg>
+    </div>
+    <div class="legend"><span class="g">genome lane</span><span class="p">proteome lane</span><span>shared / neutral</span></div>
+    <figcaption>The two source lanes meet in <code>build_kg_v2.py</code> on the 1000 Genomes sample ID: the same string is a column header in <code>nodes.csv.gz</code> and a row key in <code>phenotypes_real.csv</code> and in the proteomics matrices. Phenotypes stay node properties (training targets), never neighbours, so the GNN cannot read the label off the graph.</figcaption>
+  </figure>
+
+  <figure>
+    <h2>Federated topology: what moves, what never leaves</h2>
+    <div class="scroller">
+      <svg viewBox="0 0 1100 260" role="img" aria-label="Three hospital sites each hold their own Individual nodes with CARRIES and MEASURED edges; the cluster, block, gene and protein graph and the GNN encoder are shared; only model weights go to an NVFlare FedAvg server and the averaged model comes back.">
+        <defs><marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker></defs>
+        <!-- weights bus -->
+        <g fill="none" stroke="currentColor" stroke-width="1.4">
+          <path d="M145,60 L145,30 L980,30 L980,58" marker-end="url(#ar2)"/>
+          <path d="M425,60 L425,30"/>
+          <path d="M705,60 L705,30"/>
+        </g>
+        <text x="460" y="22" class="lbl">weights only, after each local round — rows never leave</text>
+        <g stroke="var(--private)" stroke-dasharray="5 4" fill="none" stroke-width="1.5">
+          <rect x="20" y="60" width="250" height="120" rx="3"/><rect x="300" y="60" width="250" height="120" rx="3"/><rect x="580" y="60" width="250" height="120" rx="3"/>
+        </g>
+        <text x="32" y="82" class="title">Site 1 (private)</text><text x="312" y="82" class="title">Site 2 (private)</text><text x="592" y="82" class="title">Site 3 (private)</text>
+        <text x="32" y="104" class="mono">Individual nodes · labels</text><text x="312" y="104" class="mono">Individual nodes · labels</text><text x="592" y="104" class="mono">Individual nodes · labels</text>
+        <text x="32" y="120" class="mono">CARRIES edges (genotype)</text><text x="312" y="120" class="mono">CARRIES edges (genotype)</text><text x="592" y="120" class="mono">CARRIES edges (genotype)</text>
+        <text x="32" y="136" class="mono">MEASURED edges (proteome)</text><text x="312" y="136" class="mono">MEASURED edges (proteome)</text><text x="592" y="136" class="mono">MEASURED edges (proteome)</text>
+        <text x="32" y="162" class="lbl">local training round on its subgraph</text><text x="312" y="162" class="lbl">local training round on its subgraph</text><text x="592" y="162" class="lbl">local training round on its subgraph</text>
+        <!-- shared graph -->
+        <rect x="20" y="200" width="810" height="46" rx="3" fill="var(--genome-soft)" stroke="var(--genome)" stroke-width="1.5"/>
+        <text x="32" y="219" class="title">Shared, public: Cluster · Block · Gene · Protein graph + the GNN encoder weights</text>
+        <text x="32" y="236" class="lbl">identical at every site (data.haploblocks.org); a new site maps its haplotypes to these clusters by BLAST against shared representatives</text>
+        <!-- server -->
+        <rect x="880" y="60" width="200" height="120" rx="3" fill="var(--surface)" stroke="currentColor" stroke-width="1.5"/>
+        <text x="892" y="82" class="title">NVFlare server · FedAvg</text>
+        <text x="892" y="102" class="mono">average weights (by n)</text>
+        <text x="892" y="118" class="mono">send global model back</text>
+        <text x="892" y="140" class="lbl">no rows, no embeddings of people</text>
+        <text x="892" y="156" class="lbl">control: site stays at chance</text>
+        <path d="M878,150 L830,150" fill="none" stroke="currentColor" stroke-width="1.4" marker-end="url(#ar2)"/>
+        <text x="836" y="144" class="lbl">model</text>
+      </svg>
+    </div>
+    <div class="legend"><span class="d">site-private</span><span class="g">shared, public</span></div>
+    <figcaption>Because individuals are their own node type, the site boundary is a clean cut through the graph: everything in the teal band is public and identical everywhere; everything inside the dashed boxes stays put. Mixed-ancestry sites make <em>site</em> a pure batch label, so a model that predicts site is learning batch, not biology.</figcaption>
+  </figure>
+
+  <div class="two">
+    <section>
+      <h2>Tech stack</h2>
+      <table>
+        <thead><tr><th>Layer</th><th>Choice</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>Graph data</td><td><code>data.haploblocks.org</code> HaploGraph 1000G (39,141 blocks genome-wide; chr22 here)</td><td><span class="status done">done</span></td></tr>
+          <tr><td>Graph build</td><td>pandas 3.0 · scipy 1.18 CSR int8 streaming · PyG <code>HeteroData</code></td><td><span class="status done">done</span></td></tr>
+          <tr><td>Schema v2</td><td>Gene/Protein nodes from <code>uniprot_chr22.bed</code>; MEASURED with per-site robust-z harmoniser</td><td><span class="status done">done</span></td></tr>
+          <tr><td>Graph display</td><td>Neo4j 5.26 community (Docker, <code>localhost:7474</code>) · NetworkX 3.6 · nx-cugraph on GPU</td><td><span class="status done">done</span></td></tr>
+          <tr><td>Embeddings</td><td>SVD-32 (scipy) · Node2Vec (pyg-lib) · GNN hidden layer 64-d</td><td><span class="status done">done</span></td></tr>
+          <tr><td>Model</td><td>torch 2.14 · torch_geometric 2.8.0 · HeteroConv(SAGEConv, GraphConv) · class-weighted CE · masked MSE</td><td><span class="status done">done</span></td></tr>
+          <tr><td>Training compute</td><td>Brev A100 80 GB (Crusoe) · L4 24 GB (GCP) · Mac M2 CPU for dev</td><td><span class="status done">done</span></td></tr>
+          <tr><td>Inference</td><td><code>torch.compile</code> inductor 7.5× · Torch-TensorRT 2.14 fp16 (dense parts; PyTorch fallback for scatter)</td><td><span class="status done">done</span></td></tr>
+          <tr><td>Decoder</td><td>GraphRAG prompt → NVIDIA NIM (Nemotron / Llama) · stretch: PyG G-Retriever soft-prompt LLM</td><td><span class="status next">next</span></td></tr>
+          <tr><td>Federation</td><td>NVFlare 2.9 Recipe API, FedAvg over 3 mixed-ancestry sites</td><td><span class="status next">next</span></td></tr>
+          <tr><td>Packaging</td><td>Dockerfile (CUDA 12.6 base) · docker compose · Makefile · <code>setup.sh</code> · <code>brev_deploy.sh</code> · pinned requirements · pytest</td><td><span class="status done">done</span></td></tr>
+        </tbody>
+      </table>
+    </section>
+    <section>
+      <h2>Schema (chr22 counts)</h2>
+      <table>
+        <thead><tr><th>Node / edge</th><th>From</th><th class="num">Count</th></tr></thead>
+        <tbody>
+          <tr><td><code>Individual</code> {ancestry, population, sex, site, phenotype}</td><td>phenotypes_real.csv + sample metadata</td><td class="num">2,548</td></tr>
+          <tr><td><code>Cluster</code> {support, block stats, SVD}</td><td>nodes.csv.gz, support ≥ 25</td><td class="num">6,551</td></tr>
+          <tr><td><code>Block</code> {length, entropy, dominance}</td><td>block_stats.tsv</td><td class="num">669</td></tr>
+          <tr><td><code>Gene</code> · <code>Protein</code></td><td>uniprot_chr22.bed (isoforms collapsed)</td><td class="num">458 · 460</td></tr>
+          <tr><td><code>Individual —CARRIES→ Cluster</code></td><td>nodes.csv.gz columns</td><td class="num">2,365,574</td></tr>
+          <tr><td><code>Cluster —CO_OCCURS{weight, lift}→ Cluster</code></td><td>edges_lift_above_threshold</td><td class="num">187,030</td></tr>
+          <tr><td><code>Cluster —IN_BLOCK→ Block</code> · <code>Block —NEXT_BLOCK→ Block</code></td><td>ids · coordinates</td><td class="num">6,551 · 668</td></tr>
+          <tr><td><code>Block —OVERLAPS→ Gene</code> · <code>Gene —ENCODES→ Protein</code></td><td>coordinate intersection</td><td class="num">1,063 · 460</td></tr>
+          <tr><td><code>Individual —MEASURED{log2, z}→ Protein</code></td><td>proteomics matrices, harmonised</td><td class="num">1,065,123</td></tr>
+        </tbody>
+      </table>
+    </section>
+  </div>
+
+  <section>
+    <h2>Measured, not assumed</h2>
+    <div class="timings">
+      <div class="t"><span class="k">GNN epoch</span><span class="v">0.10 s</span><span class="s">A100 · vs 0.95 s on the M2 CPU (full batch, 2.4 M edges)</span></div>
+      <div class="t"><span class="k">Inference, full graph</span><span class="v">4.9 ms</span><span class="s">torch.compile · 36 ms eager · max logit diff 1.4e-6</span></div>
+      <div class="t"><span class="k">Ancestry (held-out)</span><span class="v">0.97</span><span class="s">balanced accuracy · logistic baseline 0.98 · sex control 0.50</span></div>
+      <div class="t"><span class="k">Phenotype: proteome → + genome</span><span class="v">0.96 → 0.99</span><span class="s">AUC, held-out · genome alone 0.60 · synthetic ground truth</span></div>
+      <div class="t"><span class="k">Site (batch) control</span><span class="v">0.30</span><span class="s">3 sites, chance 0.33 · harmoniser removes the injected shift</span></div>
+      <div class="t"><span class="k">Graph ↔ phenotype</span><span class="v">98.8 %</span><span class="s">of clusters ancestry-associated (FDR 5 %) · 0 % sex</span></div>
+    </div>
+  </section>
+
+  <footer>Everything runs from a clone: <code>make setup &amp;&amp; make run</code> on a laptop, <code>make docker</code> for the CUDA image, <code>make neo4j-load</code> to browse the graph, <code>make brev</code> to build and train on an NVIDIA Brev GPU and copy the outputs back. Numbers are chr22, seed 42, 70/15/15 stratified split; synthetic proteomics carries a saved ground truth so recovery can be scored.</footer>
+</div>
