@@ -36,12 +36,12 @@ knowledge-graph construction workflow; it was added separately for the
 graph-neural-network comparison described below.
 
 For the graph-neural-network comparison, PyTorch and PyTorch Geometric were
-used to create one graph per patient. Each graph used the shared
-haplograph-derived protein network, with each protein node represented by the
-patient's measured abundance plus standardized haplograph degree, weight, and
-lift. A two-layer GCN followed by global mean pooling and a small
-covariate-aware classifier predicted phenotype. To keep computation tractable,
-the protein network was projected from haploblock membership and restricted to
-the 2,000 highest-weight projected protein edges. The PyG model used the same
-site-by-phenotype stratified split and five-fold training-set cross-validation
-as the logistic-regression model.
+used. PyGCN 1 used two GCNConv layers and a 2,000-edge projected protein graph.
+PyGCN 2 used the complete projected protein graph (30,354 undirected edges),
+GATv2Conv attention layers, and aggregated haplograph weight and lift as edge
+attributes. PyGCN 2 encoded the shared graph once per optimization step and
+used each patient's abundance vector to pool protein embeddings, avoiding
+memory-expensive duplication of the full graph. Three hyperparameter settings
+were compared on a validation split, followed by early-stopped training and
+five-fold cross-validation using the same site-by-phenotype stratification as
+the logistic-regression model.

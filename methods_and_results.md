@@ -72,17 +72,18 @@ subsets so that node identities and edge statistics remain readable.
 
 ### PyTorch Geometric comparison
 
-A separate graph-neural-network baseline was implemented with **PyTorch** and
-**PyTorch Geometric (PyG)**. Each patient was represented as a graph over the
-shared 397-protein network. Each protein node contained that patient's
-abundance plus standardized haplograph degree, weight, and lift.
-
-Protein–protein edges were projected from annotated haploblock memberships and
-restricted to the 2,000 highest-weight projected edges for computational
-tractability. The model used two `GCNConv` layers, global mean pooling, and a
-small classifier receiving age, sex, and site covariates. The PyG model used
-the same stratified split and five-fold training-set cross-validation as the
-logistic-regression reference.
+Two graph-neural-network models were implemented with **PyTorch** and
+**PyTorch Geometric (PyG)**. PyGCN 1 used two `GCNConv` layers and a 2,000-edge
+protein projection. PyGCN 2 used the complete 30,354-edge undirected protein
+projection (60,708 directed edges), two `GATv2Conv` attention layers, and both
+projected edge attributes: aggregated haplograph weight and lift. To avoid
+replicating the full graph 4,000 times in GPU memory, PyGCN 2 encoded the
+shared protein graph once per optimization step and pooled the learned protein
+embeddings with each patient's abundance vector; age, sex, and site were then
+included in the classifier. PyGCN 2 used three candidate hyperparameter sets,
+selected the best by a stratified validation split, trained with early
+stopping, and used the same held-out test split and five-fold training-set
+cross-validation as the logistic-regression reference.
 
 ## 2. Results
 
@@ -125,12 +126,15 @@ protein that best distinguishes the phenotype.
 | Model | Test ROC AUC | CV ROC AUC | Test balanced accuracy | Test F1 |
 |---|---:|---:|---:|---:|
 | Logistic regression | 0.933 | 0.930 ± 0.011 | 0.848 | 0.820 |
-| PyG GCN | 0.512 | 0.496 ± 0.018 | 0.500 | 0.580 |
+| PyGCN 1 | 0.512 | 0.496 ± 0.018 | 0.500 | 0.580 |
+| PyGCN 2 | 0.517 | 0.535 ± 0.026 | 0.513 | 0.537 |
 
-The current PyG GCN is therefore a reproducible baseline, not the strongest
-model for this dataset. It was lightly trained and did not yet use attention,
-edge attributes, extensive hyperparameter tuning, or the complete projected
-protein network.
+PyGCN 2 improved over PyGCN 1 in cross-validation ROC AUC (0.535 versus
+0.496) and balanced accuracy (0.506 versus 0.497), but both graph models were
+near chance and substantially below logistic regression. The graph models may
+need a different patient-level graph formulation, richer node features, and
+more task-specific architecture design before they can exploit the network
+structure effectively for phenotype prediction.
 
 ## 3. Figures
 
