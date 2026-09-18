@@ -14,6 +14,8 @@ They were joined to age, sex, site, and binary case/control phenotype
 metadata, giving 4,000 samples and 460 measured proteins. **NumPy** was used
 for numerical transformations and missing-value handling.
 
+All feature filtering was learned from training samples only: proteins had to be observed in at least 80% of training samples, have median log2 intensity at least 6, and have variance at least 0.01; for pairs with absolute Pearson correlation above 0.8, the higher-variance protein was retained.
+
 The cohort composition by site was:
 
 | Site | N | Control | Case | Female | Male | Age, mean ± SD (years) |
