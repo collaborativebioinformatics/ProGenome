@@ -250,13 +250,15 @@ measure, but this figure does not show p-values or confidence intervals.
 ![Figure 6: Integrated haploblock–proteomics network](proteomics/graph_comparison/haplograph_proteomics_network.png)
 
 Squares represent haploblocks labeled with their mapped protein name(s), and
-circles represent labeled proteins. Grey lines show protein membership.
-Orange lines show haploblock co-occurrence, and their thickness combines the
-log-scaled edge weight and lift: thinner lines indicate lower combined
-co-occurrence strength and thicker lines indicate higher combined strength.
-The legend explains these line types and thicknesses. Protein color represents
-the difference in mean log2 abundance between phenotype groups. Colors and
-line widths are visual encodings, not statistical significance tests.
+circles represent labeled proteins. Grey membership lines connect proteins to
+haploblocks; their thickness is proportional to the mapped protein's
+log-scaled haplograph degree, so thicker grey lines indicate more highly
+connected proteins. Orange lines show haploblock co-occurrence, and their
+thickness combines the log-scaled edge weight and lift: thicker orange lines
+indicate higher combined co-occurrence strength. The legend explains these
+line types and thicknesses. Protein color represents the difference in mean
+log2 abundance between phenotype groups. Colors and line widths are visual
+encodings, not statistical significance tests.
 
 ### Figure 7 — Graph connectivity versus logistic-regression importance
 

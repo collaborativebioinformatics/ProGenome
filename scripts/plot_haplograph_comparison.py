@@ -91,8 +91,12 @@ def draw_combined(edges: pd.DataFrame, graph_features: pd.DataFrame, output: Pat
                     proteins.add(protein)
                     graph.nodes[f"B:{block}"]["proteins"].add(protein)
                     graph.add_node(f"P:{protein}", type="protein",
-                                   phenotype=float(graph_features.loc[protein, "phenotype_difference"]))
-                    graph.add_edge(f"B:{block}", f"P:{protein}", relation="contains", weight=1, lift=1)
+                                   phenotype=float(graph_features.loc[protein, "phenotype_difference"]),
+                                   degree=float(graph_features.loc[protein, "graph_degree"]))
+                    graph.add_edge(
+                        f"B:{block}", f"P:{protein}", relation="contains",
+                        degree=float(graph_features.loc[protein, "graph_degree"]),
+                    )
     if not proteins:
         raise ValueError("No protein memberships found for the selected haploblocks")
     positions = nx.spring_layout(graph, seed=42, weight="weight", iterations=100)
@@ -100,6 +104,15 @@ def draw_combined(edges: pd.DataFrame, graph_features: pd.DataFrame, output: Pat
     block_nodes = [n for n, d in graph.nodes(data=True) if d["type"] == "haploblock"]
     protein_nodes = [n for n, d in graph.nodes(data=True) if d["type"] == "protein"]
     protein_signal = np.array([graph.nodes[n]["phenotype"] for n in protein_nodes])
+    membership_edges = [(u, v, d) for u, v, d in graph.edges(data=True) if d["relation"] == "contains"]
+    membership_degrees = np.log1p([data["degree"] for _, _, data in membership_edges])
+    if membership_degrees.size:
+        membership_widths = 0.4 + 2.2 * (
+            (membership_degrees - membership_degrees.min())
+            / max(membership_degrees.ptp(), 1e-6)
+        )
+    else:
+        membership_widths = []
     nx.draw_networkx_nodes(graph, positions, nodelist=block_nodes, node_color="#4c78a8",
                            node_shape="s", node_size=65, label="Haploblock", ax=ax)
     nx.draw_networkx_nodes(graph, positions, nodelist=protein_nodes, node_color=protein_signal,
@@ -115,8 +128,10 @@ def draw_combined(edges: pd.DataFrame, graph_features: pd.DataFrame, output: Pat
         cooccurrence_widths = 0.8 + 4.0 * (weight_scale + lift_scale) / 2
     else:
         cooccurrence_widths = []
-    nx.draw_networkx_edges(graph, positions, edgelist=membership, edge_color="#999999",
-                           width=0.5, alpha=0.35, ax=ax)
+    nx.draw_networkx_edges(
+        graph, positions, edgelist=membership, edge_color="#999999",
+        width=membership_widths, alpha=0.45, ax=ax,
+    )
     nx.draw_networkx_edges(graph, positions, edgelist=cooccurrence, edge_color="#d55e00",
                            width=cooccurrence_widths, alpha=0.6, ax=ax)
     nx.draw_networkx_labels(
@@ -136,6 +151,7 @@ def draw_combined(edges: pd.DataFrame, graph_features: pd.DataFrame, output: Pat
     ax.legend(
         handles=[
             Line2D([0], [0], color="#999999", lw=1, label="Protein membership"),
+            Line2D([0], [0], color="#999999", lw=3, label="Membership: higher protein degree"),
             Line2D([0], [0], color="#d55e00", lw=1, label="Lower weight/lift"),
             Line2D([0], [0], color="#d55e00", lw=4, label="Higher weight/lift"),
         ],
