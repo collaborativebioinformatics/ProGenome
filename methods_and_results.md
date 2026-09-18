@@ -14,6 +14,18 @@ They were joined to age, sex, site, and binary case/control phenotype
 metadata, giving 4,000 samples and 460 measured proteins. **NumPy** was used
 for numerical transformations and missing-value handling.
 
+The cohort composition by site was:
+
+| Site | N | Control | Case | Female | Male | Age, mean ± SD (years) |
+|---|---:|---:|---:|---:|---:|---:|
+| Site 1 | 1,334 | 773 | 561 | 686 | 648 | 52.05 ± 19.60 |
+| Site 2 | 1,333 | 791 | 542 | 697 | 636 | 50.88 ± 19.69 |
+| Site 3 | 1,333 | 799 | 534 | 674 | 659 | 51.79 ± 19.57 |
+| **Total** | **4,000** | **2,363** | **1,637** | **2,057** | **1,943** | **51.57 ± 19.62** |
+
+Here, phenotype 0 is called control and phenotype 1 is called case; sex 0 is
+reported as female and sex 1 as male, following the dataset encoding.
+
 Samples were divided into an 80% training set and a 20% held-out test set
 using a fixed random seed. Stratification used the joint site-by-phenotype
 label, preserving case/control proportions within each site. Protein
