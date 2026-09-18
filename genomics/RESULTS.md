@@ -353,17 +353,49 @@ pQTL edge prior.
 
 ### 4.5 Decoder: from numbers to a cited report
 
-For HG00103 (EUR, GBR, 994 clusters carried, predicted control) the model answered in 13 s from a 4,555-token context
-with a 1,020-token reply, cited 25 ids and invented none:
+The encoder's output for a person is numbers: a class score, 64 coordinates, a ranking of clusters. The decoder turns
+them into something a research team can read, without letting the language model invent anything. Worked example,
+HG00103 (EUR, GBR, male, site 3, age 29, 994 clusters carried; true label control).
 
-> Individual HG00103 is of EUR ancestry (GBR population) and carries 994 haploblock clusters. The GNN phenotype
-> prediction for this individual is 'control', which is a synthetic case/control label used for pipeline testing.
-> Several ancestry-informative clusters are carried, showing high enrichment in various populations including EUR,
-> EAS, and SAS.
+**What the GNN alone gives for HG00103** (all retrieved deterministically from the graph and the trained model):
 
-Genome-proteome links named, for example, cluster `chr22_40032702-40132216_cluster151` in the block encoding TNRC6B
-(Q9UPQ9); caveats stated that the phenotype is synthetic and that ancestry is population structure, not a medical
-finding. A second call on a fresh clone cited 4 ids and invented none: the wording varies, the citation check does not.
+| Retrieved fact | Value |
+|---|---|
+| GNN prediction | control (truth: control) |
+| Globally salient clusters this person carries | chr22_46902935-46974137_cluster186 (saliency 0.110), chr22_46974137-47051453_cluster43 (0.055), chr22_40032702-40132216_cluster25 (0.046) |
+| Most ancestry-informative clusters carried, with the genes and proteins in their block | chr22_40032702-40132216_cluster151 (EAS-enriched; TNRC6B, Q9UPQ9); chr22_35738379-36060254_cluster545 (EAS; RBFOX2, O43251); chr22_26024448-26060666_cluster35 (EUR; MYO18B, Q8IUG5) |
+| Most extreme protein levels (harmonised z) | P07305 / H1-0 +2.75; Q9UFD9 / RIMBP3 -2.65; Q15735 / INPP5J +2.53; P53673 / CRYBA4 +2.52; Q04917 / YWHAH +2.37 |
+| Nearest people in the 64-d embedding | HG01767 (EUR, IBS), NA12842 (EUR, CEU), HG00351 (EUR, FIN), HG04002 (SAS, ITU), HG00336 (EUR, FIN) |
+
+**What the decoder returns** (Nemotron 3 Super on NVIDIA NIM, 13.3 s, 4,555 prompt tokens, 1,020 completion tokens):
+
+| Field | Text returned |
+|---|---|
+| summary | Individual HG00103 is of EUR ancestry (GBR population) and carries 994 haploblock clusters. The GNN phenotype prediction for this individual is 'control', which is a synthetic case/control label used for pipeline testing. Several ancestry-informative clusters are carried, showing high enrichment in various populations including EUR, EAS, and SAS. |
+| ancestry_assessment | The individual's ancestry is EUR (European) as per the 1000G panel data, with population label GBR. This reflects population structure, not a medical finding. |
+| phenotype_assessment | The GNN-predicted phenotype is 'control', which is a synthetic case/control label used to test the pipeline; it does not reflect a real medical condition. |
+| caveats | Ancestry labels reflect population structure and are not medical findings. The phenotype is synthetic. Not all carried clusters have gene or protein annotations. The GNN prediction is based on the embedding and may not correlate with observed protein levels. |
+| citation check | 25 ids cited, 0 unknown (every id exists in the retrieved context) |
+
+Genome-to-proteome links the decoder wrote, each traceable to graph ids:
+
+| Cluster carried | Block | Gene in the block | Protein | Observation |
+|---|---|---|---|---|
+| chr22_40032702-40132216_cluster151 | chr22_40032702-40132216 | TNRC6B | Q9UPQ9 | carried by individual, enriched in EAS |
+| chr22_35738379-36060254_cluster545 | chr22_35738379-36060254 | RBFOX2 | O43251 | carried by individual, enriched in EAS |
+| chr22_26024448-26060666_cluster35 | chr22_26024448-26060666 | MYO18B | Q8IUG5 | carried by individual, enriched in EUR |
+
+A second person, HG00096 (not in the held-out split, run on a fresh clone): the decoder reported that no prediction
+exists for them rather than inventing one, backed the EUR label with carrier fractions it read from the context
+("chr22_26024448-26060666_cluster35 at 0.952 ... consistent with the EUR ancestry label"), listed six genome-to-proteome
+links including CELSR1 / Q9NYQ6 and PPARA / Q6NVV7, and cited 24 ids with 0 unknown in 10.8 s.
+
+**What the LLM adds, and what it does not.** It adds the sentence layer: one paragraph a clinician or biologist can read,
+the genome-to-protein chain (cluster carried, block, gene, protein) spelled out per person, the right hedges attached
+automatically (population structure is not a medical finding, the phenotype is synthetic), graceful handling of missing
+information, and traceability, because every claim carries an id that the code verifies against the retrieved facts.
+It does not make predictions, does not add outside knowledge, and cannot cite anything the graph did not provide; the
+wording and the number of ids it chooses to cite vary between calls, the citation check does not.
 
 ![Person neighbourhood](docs/report/figures/person_neighbourhood.png)
 
@@ -379,13 +411,36 @@ nearest neighbours in the embedding.*
 | central model (train_gnn_v2, both / raw) | 0.953-0.969 | 0.992-0.995 | the same 376 held-out people |
 | federated model per site (30 rounds) | 0.98 / 0.98-0.99 / 0.93 | 0.999 / 1.000 / 0.968-0.997 | each site's own held-out people |
 
-With and without federation (same 150 optimizer steps per site): a lone site reaches own-site AUC 0.986-0.998 and
-transfers to other sites at worst 0.949-0.997; the federated model scores 0.968-1.000 per site and 0.987-0.998 pooled.
-With a smaller training budget the picture changes: at 50 steps per site (10 rounds, A100 Docker run) a lone site reaches
-only 0.88-0.92 while the federated model, which has seen every site's people through the averaged weights, reaches
-0.989-0.998 on the same per-site people. So federation costs nothing when a site has enough data and budget, and helps
-clearly when it does not; in both cases what it solves is the constraint: one model trained on everyone with no row
-leaving a site. A larger gain is expected with ancestry-pure sites.
+**Each site alone versus the federated model.** `federated/local_only.py` trains a model at each site on that site's
+people only, for the same number of optimizer steps the federated clients used, and scores it on the same held-out people
+as the federated global model. Two budgets were run on the A100: 150 steps per site (30 rounds x 5 epochs) and 50 steps
+(10 rounds x 5 epochs). AUC / balanced accuracy on each site's own held-out people:
+
+| Site (held-out n) | Alone, 150 steps | Federated, 150 steps | Alone, 50 steps | Federated, 50 steps |
+|---|---|---|---|---|
+| SITE1 (111) | 0.998 / 0.952 | 0.999 / 0.983 | 0.881 / 0.543 | 0.998 / 0.950 |
+| SITE2 (136) | 0.986 / 0.852 | 1.000 / 0.991 | 0.902 / 0.772 | 0.991 / 0.907 |
+| SITE3 (129) | 0.988 / 0.923 | 0.968 / 0.933 | 0.915 / 0.830 | 0.989 / 0.865 |
+| **Average over sites** | **0.991 / 0.909** | **0.989 / 0.969** | **0.899 / 0.715** | **0.993 / 0.907** |
+| Pooled 376 people, federated global model | - | 0.987 / 0.967 | - | 0.991 / 0.901 |
+| Pooled 376 people, central model (all data in one place) | 0.995 / 0.960 | | 0.997 / 0.959 | |
+
+A lone site's model also has to work on other hospitals' patients. Test AUC of each model on each site's held-out
+people (150 steps; rows = where the model was trained, columns = whose patients it is scored on):
+
+| Model trained at | on SITE1 people | on SITE2 people | on SITE3 people |
+|---|---|---|---|
+| SITE1 alone | 0.998 | 0.982 | 0.949 |
+| SITE2 alone | 0.993 | 0.986 | 0.969 |
+| SITE3 alone | 0.997 | 0.998 | 0.988 |
+| **Federated global model** | **0.999** | **1.000** | **0.968** |
+
+Reading. With a full budget a lone site is nearly as good as the federated model on AUC (0.991 vs 0.989 on average)
+but clearly worse on balanced accuracy (0.909 vs 0.969), because a single site's threshold is calibrated on its own
+case mix. With the smaller budget the gap opens: lone sites average 0.899 AUC and 0.715 balanced accuracy, the federated
+model 0.993 and 0.907, because the averaged weights have effectively seen every site's people. Federation therefore costs
+nothing when a site has enough data and budget, helps clearly when it does not, and in both cases solves the constraint:
+one model trained on everyone with no row leaving a site. A larger gain is expected with ancestry-pure sites.
 
 ![FedAvg rounds](docs/report/figures/federated_rounds.png)
 

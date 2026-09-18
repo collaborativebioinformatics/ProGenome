@@ -184,6 +184,34 @@ Four of the top twenty (and the top three outright) are among the 20 planted cau
 
 The language model is not part of training and makes no prediction. It sits after the encoder, once per person, as the decoder: graphrag\_decoder.py walks the graph around one person and collects facts (their ancestry-informative clusters with blocks, genes and proteins; their most extreme protein levels and the block that encodes each; the GNN's prediction; the salient clusters they carry; their five nearest neighbours in the embedding), serialises them as JSON and asks the NIM model (nvidia/nemotron-3-super-120b-a12b) to write a structured report using only those facts and citing every id verbatim. The code then checks each cited id against the context. What this achieves is the last step the README's mission implies, turning numbers into an insight a research team can read: a summary, an ancestry assessment, a phenotype assessment, explicit genome-to-proteome links and caveats, each traceable to graph ids. For HG00103 (EUR, GBR, 994 clusters carried, predicted control) the model answered in 13 seconds from a 4,555-token context with a 1,020-token reply, cited 25 ids and invented none; its links named, for example, cluster chr22\_40032702-40132216\_cluster151 in the block encoding TNRC6B (protein Q9UPQ9) and cluster chr22\_26024448-26060666\_cluster35 in the block encoding MYO18B (Q8IUG5), and its caveats stated that the phenotype is synthetic and that ancestry is population structure, not a medical finding. Without an API key the same script prints the exact prompt (dry run), so the retrieval can be inspected offline.
 
+\begin{longtable}{p{0.329\linewidth}p{0.611\linewidth}}
+\toprule
+\textbf{Retrieved fact for HG00103} & \textbf{Value} \\
+\midrule
+\endhead
+GNN prediction & control (truth: control) \\
+globally salient clusters carried & chr22\_46902935-46974137\_cluster186 (0.110), chr22\_46974137-47051453\_cluster43 (0.055), chr22\_40032702-40132216\_cluster25 (0.046) \\
+most ancestry-informative clusters, with block genes and proteins & cluster151 of block 40032702-40132216 (TNRC6B, Q9UPQ9); cluster545 of 35738379-36060254 (RBFOX2, O43251); cluster35 of 26024448-26060666 (MYO18B, Q8IUG5) \\
+most extreme protein levels (z) & H1-0 +2.75, RIMBP3 -2.65, INPP5J +2.53, CRYBA4 +2.52, YWHAH +2.37 \\
+nearest people in the embedding & HG01767 (EUR), NA12842 (EUR), HG00351 (EUR), HG04002 (SAS), HG00336 (EUR) \\
+\bottomrule
+\end{longtable}
+
+\begin{longtable}{p{0.207\linewidth}p{0.733\linewidth}}
+\toprule
+\textbf{Decoder field} & \textbf{Text returned (Nemotron 3 Super, 13.3 s, 25 ids cited, 0 unknown)} \\
+\midrule
+\endhead
+summary & Individual HG00103 is of EUR ancestry (GBR population) and carries 994 haploblock clusters. The GNN phenotype prediction for this individual is 'control', which is a synthetic case/control label used for pipeline testing. Several ancestry-informative clusters are carried, showing high enrichment in various populations including EUR, EAS, and SAS. \\
+ancestry\_assessment & The individual's ancestry is EUR (European) as per the 1000G panel data, with population label GBR. This reflects population structure, not a medical finding. \\
+phenotype\_assessment & The GNN-predicted phenotype is 'control', which is a synthetic case/control label used to test the pipeline; it does not reflect a real medical condition. \\
+genome\_proteome\_links & cluster151 $\rightarrow$ block 40032702-40132216 $\rightarrow$ TNRC6B $\rightarrow$ Q9UPQ9 (carried, enriched in EAS); cluster545 $\rightarrow$ RBFOX2 $\rightarrow$ O43251; cluster35 $\rightarrow$ MYO18B $\rightarrow$ Q8IUG5 (enriched in EUR) \\
+caveats & ancestry is population structure, not a medical finding; the phenotype is synthetic; not all clusters have gene or protein annotations; the prediction comes from the embedding and may not match observed protein levels \\
+\bottomrule
+\end{longtable}
+
+What the LLM adds is the sentence layer: a readable paragraph, the genome-to-protein chain spelled out per person, the right hedges attached automatically, graceful handling of missing information (for HG00096, who is not in the held-out split, it reported that no prediction exists instead of inventing one), and traceability, because every claim carries an id that the code verifies. It makes no prediction and adds no outside knowledge.
+
 \subsection{Connecting the dots to the README on branch main}
 
 The team README fixes a mission, three research questions, a chromosome-22 demo scope, five required datasets and a data-integration flowchart. Each maps to something concrete in genomics/:
@@ -621,6 +649,22 @@ federated/local\_only.py trains each site alone on its own people for the same 1
 \includegraphics[width=0.80\linewidth]{federated_site_alone.png}
 \caption{With and without federation: each site trained alone on its own people versus the federated global model, scored on the same held-out people per site (A100 re-run).}
 \end{figure}
+
+\begin{longtable}{p{0.301\linewidth}p{0.160\linewidth}p{0.160\linewidth}p{0.160\linewidth}p{0.160\linewidth}}
+\toprule
+\textbf{Site (held-out n)} & \textbf{Alone, 150 steps} & \textbf{Federated, 150 steps} & \textbf{Alone, 50 steps} & \textbf{Federated, 50 steps} \\
+\midrule
+\endhead
+SITE1 (111) & 0.998 / 0.952 & 0.999 / 0.983 & 0.881 / 0.543 & 0.998 / 0.950 \\
+SITE2 (136) & 0.986 / 0.852 & 1.000 / 0.991 & 0.902 / 0.772 & 0.991 / 0.907 \\
+SITE3 (129) & 0.988 / 0.923 & 0.968 / 0.933 & 0.915 / 0.830 & 0.989 / 0.865 \\
+average over sites & 0.991 / 0.909 & 0.989 / 0.969 & 0.899 / 0.715 & 0.993 / 0.907 \\
+pooled 376 people, federated global model & - & 0.987 / 0.967 & - & 0.991 / 0.901 \\
+pooled 376 people, central model & 0.995 / 0.960 &  & 0.997 / 0.959 &  \\
+\bottomrule
+\end{longtable}
+
+AUC / balanced accuracy on each site's own held-out people. Transfer of a lone model to other sites' people (150 steps, AUC): the SITE1 model scores 0.982 on SITE2 people and 0.949 on SITE3 people; SITE2: 0.993 and 0.969; SITE3: 0.997 and 0.998; the federated model 0.999 / 1.000 / 0.968 on the three sites.
 
 \subsubsection{Why federated, and what kind}
 
