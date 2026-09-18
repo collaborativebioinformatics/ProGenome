@@ -23,9 +23,18 @@ def draw_haplograph(edges: pd.DataFrame, output: Path, max_nodes: int) -> None:
     degree = pd.concat([edges["source"], edges["target"]]).value_counts()
     selected = set(degree.head(max_nodes).index)
     subset = edges[edges["source"].isin(selected) & edges["target"].isin(selected)].copy()
+    node_proteins: dict[str, set[str]] = {node: set() for node in selected}
+    for _, row in edges.iterrows():
+        for node, column in ((row.source, "source_protein"), (row.target, "target_protein")):
+            if node in node_proteins:
+                node_proteins[node].update(
+                    protein for protein in str(row.get(column, "")).split(";")
+                    if protein and protein != "nan"
+                )
     graph = nx.Graph()
     for node, value in degree.loc[list(selected)].items():
-        graph.add_node(node, degree=float(value))
+        label = ";".join(sorted(node_proteins[node])) or "no mapped protein"
+        graph.add_node(node, degree=float(value), label=label)
     for _, row in subset.iterrows():
         graph.add_edge(row.source, row.target, weight=float(row.weight), lift=float(row.lift))
     positions = nx.spring_layout(graph, seed=42, weight="weight", iterations=80)
@@ -44,7 +53,7 @@ def draw_haplograph(edges: pd.DataFrame, output: Path, max_nodes: int) -> None:
     )
     nx.draw_networkx_labels(
         graph, positions,
-        labels={node: node for node in graph},
+        labels={node: graph.nodes[node]["label"] for node in graph},
         font_size=5, bbox={"alpha": 0.6, "color": "white", "pad": 0.2}, ax=ax,
     )
     nx.draw_networkx_edge_labels(
@@ -69,7 +78,7 @@ def draw_combined(edges: pd.DataFrame, graph_features: pd.DataFrame, output: Pat
     proteins: set[str] = set()
     graph = nx.Graph()
     for block in blocks:
-        graph.add_node(f"B:{block}", type="haploblock", degree=float(block_degree[block]))
+        graph.add_node(f"B:{block}", type="haploblock", degree=float(block_degree[block]), proteins=set())
     for _, row in subset.iterrows():
         source, target = f"B:{row.source}", f"B:{row.target}"
         if source in graph and target in graph:
@@ -80,6 +89,7 @@ def draw_combined(edges: pd.DataFrame, graph_features: pd.DataFrame, output: Pat
             for protein in str(row.get(column, "")).split(";"):
                 if protein in graph_features.index:
                     proteins.add(protein)
+                    graph.nodes[f"B:{block}"]["proteins"].add(protein)
                     graph.add_node(f"P:{protein}", type="protein",
                                    phenotype=float(graph_features.loc[protein, "phenotype_difference"]))
                     graph.add_edge(f"B:{block}", f"P:{protein}", relation="contains", weight=1, lift=1)
@@ -102,7 +112,14 @@ def draw_combined(edges: pd.DataFrame, graph_features: pd.DataFrame, output: Pat
                            width=1.2, alpha=0.5, ax=ax)
     nx.draw_networkx_labels(
         graph, positions,
-        labels={node: node[2:] for node in graph},
+        labels={
+            node: (
+                ";".join(sorted(graph.nodes[node]["proteins"])) or "no mapped protein"
+                if graph.nodes[node]["type"] == "haploblock"
+                else node[2:]
+            )
+            for node in graph
+        },
         font_size=5, bbox={"alpha": 0.65, "color": "white", "pad": 0.2}, ax=ax,
     )
     edge_labels = {}

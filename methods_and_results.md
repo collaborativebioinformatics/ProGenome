@@ -167,7 +167,8 @@ exploratory visualization, not a statistical significance test.
 
 ![Figure 5: Haplograph-only network](proteomics/graph_comparison/haplograph_network.png)
 
-Each labeled node is a high-degree haploblock. Larger nodes have higher degree
+Each node is a high-degree haploblock labeled only with its mapped protein
+name(s), rather than its cluster identifier. Larger nodes have higher degree
 in the displayed subgraph. Each edge is labeled with `w` (co-occurrence
 weight) and `l` (lift); edge width also represents the logarithm of weight,
 while edge color represents lift. Higher lift means stronger co-occurrence
@@ -178,12 +179,13 @@ measure, but this figure does not show p-values or confidence intervals.
 
 ![Figure 6: Integrated haploblock–proteomics network](proteomics/graph_comparison/haplograph_proteomics_network.png)
 
-Squares represent labeled haploblocks and circles represent labeled proteins.
-Grey edges are labeled `contains` and show that a protein maps to or overlaps
-a haploblock; orange edges are labeled with `w` and `l` and show haploblock
-co-occurrence weight and lift. Protein color represents the difference in mean
-log2 abundance between phenotype groups. Colors and line widths are visual
-encodings, not statistical significance tests.
+Squares represent haploblocks labeled with their mapped protein name(s), and
+circles represent labeled proteins. Grey edges are labeled `contains` and show
+that a protein maps to or overlaps a haploblock; orange edges are labeled with
+`w` and `l` and show haploblock co-occurrence weight and lift. Protein color
+represents the difference in mean log2 abundance between phenotype groups.
+Colors and line widths are visual encodings, not statistical significance
+tests.
 
 ### Figure 7 — Graph connectivity versus logistic-regression importance
 
