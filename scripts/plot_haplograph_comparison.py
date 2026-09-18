@@ -104,6 +104,10 @@ def draw_combined(edges: pd.DataFrame, graph_features: pd.DataFrame, output: Pat
     block_nodes = [n for n, d in graph.nodes(data=True) if d["type"] == "haploblock"]
     protein_nodes = [n for n, d in graph.nodes(data=True) if d["type"] == "protein"]
     protein_signal = np.array([graph.nodes[n]["phenotype"] for n in protein_nodes])
+    block_degree = np.array([graph.nodes[n]["degree"] for n in block_nodes])
+    protein_degree = np.array([graph.nodes[n]["degree"] for n in protein_nodes])
+    block_sizes = 45 + 180 * block_degree / max(block_degree.max(), 1)
+    protein_sizes = 55 + 220 * protein_degree / max(protein_degree.max(), 1)
     membership_edges = [(u, v, d) for u, v, d in graph.edges(data=True) if d["relation"] == "contains"]
     membership_degrees = np.log1p([data["degree"] for _, _, data in membership_edges])
     if membership_degrees.size:
@@ -114,9 +118,9 @@ def draw_combined(edges: pd.DataFrame, graph_features: pd.DataFrame, output: Pat
     else:
         membership_widths = []
     nx.draw_networkx_nodes(graph, positions, nodelist=block_nodes, node_color="#4c78a8",
-                           node_shape="s", node_size=65, label="Haploblock", ax=ax)
+                           node_shape="s", node_size=block_sizes, label="Haploblock", ax=ax)
     nx.draw_networkx_nodes(graph, positions, nodelist=protein_nodes, node_color=protein_signal,
-                           cmap="coolwarm", node_size=85, label="Protein", ax=ax)
+                           cmap="coolwarm", node_size=protein_sizes, label="Protein", ax=ax)
     membership = [(u, v) for u, v, d in graph.edges(data=True) if d["relation"] == "contains"]
     cooccurrence = [(u, v) for u, v, d in graph.edges(data=True) if d["relation"] == "co_occurs"]
     cooccurrence_data = [d for _, _, d in graph.edges(data=True) if d["relation"] == "co_occurs"]
@@ -154,6 +158,10 @@ def draw_combined(edges: pd.DataFrame, graph_features: pd.DataFrame, output: Pat
             Line2D([0], [0], color="#999999", lw=3, label="Membership: higher protein degree"),
             Line2D([0], [0], color="#d55e00", lw=1, label="Lower weight/lift"),
             Line2D([0], [0], color="#d55e00", lw=4, label="Higher weight/lift"),
+            plt.scatter([], [], s=55, marker="s", color="#4c78a8", label="Small haploblock: lower degree"),
+            plt.scatter([], [], s=225, marker="s", color="#4c78a8", label="Large haploblock: higher degree"),
+            plt.scatter([], [], s=65, marker="o", color="#808080", label="Small protein: lower degree"),
+            plt.scatter([], [], s=275, marker="o", color="#808080", label="Large protein: higher degree"),
         ],
         frameon=False, loc="upper left",
     )
