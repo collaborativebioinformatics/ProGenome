@@ -3,6 +3,20 @@
 
 📊 **Presentation slides:** [Team 3: ProGenome (Google Slides)](https://docs.google.com/presentation/d/13wHiF-xPHeDyy7XYMmTSwxAYUswgSutH7x7dZ02SOOs/edit) · 📄 **Genomics methods and results:** [genomics/RESULTS.md](genomics/RESULTS.md)
 
+[![Python](https://img.shields.io/badge/Python-3.10--3.13-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![PyTorch](https://img.shields.io/badge/PyTorch-2.14-EE4C2C?logo=pytorch&logoColor=white)](https://pytorch.org/)
+[![PyTorch Geometric](https://img.shields.io/badge/PyTorch%20Geometric-2.8-3C2179)](https://pyg.org/)
+[![CUDA](https://img.shields.io/badge/CUDA-12.6-76B900?logo=nvidia&logoColor=white)](https://developer.nvidia.com/cuda-toolkit)
+[![Docker](https://img.shields.io/badge/Docker-Containerized-2496ED?logo=docker&logoColor=white)](genomics/Dockerfile)
+[![NVIDIA FLARE](https://img.shields.io/badge/NVIDIA%20FLARE-2.9%20FedAvg-76B900?logo=nvidia&logoColor=white)](https://github.com/NVIDIA/NVFlare)
+[![NVIDIA NIM](https://img.shields.io/badge/NVIDIA%20NIM-Nemotron%203%20Super-76B900?logo=nvidia&logoColor=white)](https://build.nvidia.com/)
+[![NVIDIA Brev](https://img.shields.io/badge/NVIDIA%20Brev-A100%2080GB-76B900?logo=nvidia&logoColor=white)](https://brev.nvidia.com/)
+[![Neo4j](https://img.shields.io/badge/Neo4j-5.26%20community-008CC1?logo=neo4j&logoColor=white)](https://neo4j.com/)
+[![NetworkX](https://img.shields.io/badge/NetworkX-3.6%20%2B%20nx--cugraph-1B6AC6)](https://networkx.org/)
+[![Data](https://img.shields.io/badge/Data-1000G%20HaploGraph%20chr22-0E7C7B)](https://data.haploblocks.org/haplograph/1000G/)
+[![Tests](https://img.shields.io/badge/tests-11%20passing-brightgreen?logo=pytest&logoColor=white)](genomics/tests/)
+[![Hackathon](https://img.shields.io/badge/Nordic%20Biobank%20x%20NVIDIA-Federated%20Learning%20Hackathon%202026-5A9E3F)](https://github.com/collaborativebioinformatics/ProGenome)
+
 
 ## 🎯 Our Mission
 To develop a federated workflow that integrates haploblock-based genome-graph with proteomic data from each participating institution.
