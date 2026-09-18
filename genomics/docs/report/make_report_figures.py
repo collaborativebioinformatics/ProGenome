@@ -237,7 +237,7 @@ def sites():
     fig, axes = plt.subplots(1, 3, figsize=(13, 3.8))
     comp = meta.groupby(["site", "ancestry"]).size().unstack(fill_value=0)
     comp.plot(kind="bar", stacked=True, ax=axes[0], color=[ANC[a] for a in comp.columns], width=0.7)
-    axes[0].set_title("people per site by ancestry (mixed by design)"); axes[0].set_ylabel("people"); axes[0].legend(frameon=False, fontsize=7); axes[0].tick_params(axis="x", rotation=0)
+    axes[0].set_title("people per site by ancestry (mixed by design)"); axes[0].set_ylabel("people"); axes[0].legend(frameon=False, fontsize=7, loc="upper center", bbox_to_anchor=(0.5, -0.16), ncol=5); axes[0].tick_params(axis="x", rotation=0)
     prev = meta.groupby("site")["phenotype"].mean()
     axes[1].bar(prev.index, prev.values, color="#7a5af8", width=0.6); axes[1].set_ylim(0, 0.6); axes[1].set_title("case prevalence per site"); axes[1].set_ylabel("fraction cases")
     for i, v in enumerate(prev.values): axes[1].text(i, v + 0.01, f"{v:.2f}", ha="center", fontsize=8)

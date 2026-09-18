@@ -25,19 +25,20 @@ The team README asks three questions. This is how they were operationalised and 
 | 3 | Can it be trained across institutions without transferring individual-level data? | NVFlare FedAvg, three sites, only weights exchanged, scored on the same held-out people as the central model | done in simulation: 0.987-0.998 vs 0.992-0.995 |
 
 ```mermaid
-flowchart TB
-  subgraph V1 ["v1: genome graph to phenotypes (make run)"]
-    direction LR
-    A["data.haploblocks.org<br/>HaploGraph chr22 (pre-built)"] --> B["fetch_data.sh<br/>md5-verified download"] --> C["build_kg.py<br/>sparse carrier matrix, PyG HeteroData"] --> D["cooccurrence_analysis.py<br/>cluster / edge vs phenotype"] --> E["baseline.py<br/>logistic regression, shared split"] --> F["train_gnn.py<br/>hetero-GNN encoder"] --> G["embeddings.py<br/>silhouette, kNN, PCA plots"]
-  end
-  subgraph V2 ["v2: proteomics, integration, decoder, federated (make run-v2, make federated)"]
-    direction LR
-    H["proteomics_synth_1000g.py<br/>3 sites, 1000G ids, ground truth"] --> I["build_kg_v2.py<br/>hetero.pt from v1 + genes, proteins,<br/>harmonised MEASURED edges"] --> J["eda.py<br/>EDA report"] --> K["train_gnn_v2.py<br/>genome / proteome / both,<br/>controls, saliency"] --> L["proteome_linear_baseline.py<br/>ridge cis test"] --> M["graphrag_decoder.py<br/>NIM LLM, cited insight"] --> N["federated/job.py<br/>NVFlare FedAvg,<br/>3 sites + site-alone"]
-  end
+flowchart LR
+  A["data.haploblocks.org<br/>HaploGraph chr22 (pre-built)"] --> B["fetch_data.sh<br/>md5-verified download"] --> C["build_kg.py<br/>sparse carrier matrix,<br/>PyG HeteroData"] --> D["cooccurrence_analysis.py<br/>cluster / edge vs phenotype"] --> E["baseline.py<br/>logistic regression,<br/>shared split"] --> F["train_gnn.py<br/>hetero-GNN encoder"] --> G["embeddings.py<br/>silhouette, kNN, PCA plots"]
 ```
 
-*Figure 1. The two pipeline chains: v1 (genome graph to phenotypes) and v2 (proteomics integration, decoder,
-federated). Each box is one script with a Makefile target.*
+*v1, genome graph to phenotypes (`make run`).*
+
+```mermaid
+flowchart LR
+  H["proteomics_synth_1000g.py<br/>3 sites, 1000G ids,<br/>ground truth"] --> I["build_kg_v2.py<br/>hetero.pt from v1 + genes,<br/>proteins, harmonised MEASURED"] --> J["eda.py<br/>EDA report"] --> K["train_gnn_v2.py<br/>genome / proteome / both,<br/>controls, saliency"] --> L["proteome_linear_baseline.py<br/>ridge cis test"] --> M["graphrag_decoder.py<br/>NIM LLM, cited insight"] --> N["federated/job.py<br/>NVFlare FedAvg,<br/>3 sites + site-alone"]
+```
+
+*v2, proteomics, integration, decoder, federated (`make run-v2`, `make federated`).*
+
+*Figure 1. The two pipeline chains. Each box is one script with a Makefile target; outputs land under `outputs/<stage>/chr22/`.*
 
 ---
 
