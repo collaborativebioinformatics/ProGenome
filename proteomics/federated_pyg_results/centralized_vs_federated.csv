@@ -1,5 +1,5 @@
 model,training_mode,test_accuracy,test_balanced_accuracy,test_f1,test_roc_auc
-Logistic regression,Centralized,0.855,0.8476443548,0.8198757764,0.9325988712
+Logistic regression reference,Centralized,0.855,0.8476443548,0.8198757764,0.9325988712
 PyGCN 2,Centralized,0.46875,0.5125104254,0.5365321701,0.5174402441
-Logistic regression,Federated FedAvg,0.892484,0.89694,0.874924,0.961638
+Logistic regression (proteomics + covariates + haplograph),Federated FedAvg,0.8924887124,0.8969534230,0.8749050749,0.9617125944
 PyGCN 2,Federated FedAvg,0.56,0.4962274764,0.2142857143,0.5566460422

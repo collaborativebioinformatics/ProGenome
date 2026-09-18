@@ -175,11 +175,19 @@ federated task.
 
 ### Centralized versus federated models
 
+For the matched federated model comparison, the logistic-regression
+configuration is **proteomics + covariates + haplograph**: protein abundance,
+age, sex, site, and abundance-weighted haplograph degree, weight, and lift
+summaries. PyGCN 2 uses the same proteomic/covariate information together with
+the haplograph protein network and its weight/lift edge attributes. The
+centralized logistic row is the previously generated reference baseline and
+was not refit with the additional haplograph summary columns.
+
 | Model | Training mode | Test accuracy | Test balanced accuracy | Test F1 | Test ROC AUC |
 |---|---|---:|---:|---:|---:|
-| Logistic regression | Centralized | 0.855 | 0.848 | 0.820 | 0.933 |
+| Logistic regression reference | Centralized | 0.855 | 0.848 | 0.820 | 0.933 |
 | PyGCN 2 | Centralized | 0.469 | 0.513 | 0.537 | 0.517 |
-| Logistic regression | Federated FedAvg | 0.892 | 0.897 | 0.875 | 0.962 |
+| Logistic regression (proteomics + covariates + haplograph) | Federated FedAvg | 0.892 | 0.897 | 0.875 | 0.962 |
 | PyGCN 2 | Federated FedAvg | 0.560 | 0.496 | 0.214 | 0.557 |
 
 The federated PyGCN 2 model had higher ROC AUC than centralized PyGCN 2, but
