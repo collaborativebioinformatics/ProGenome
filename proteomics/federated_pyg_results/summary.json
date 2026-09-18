@@ -1,0 +1,51 @@
+{
+  "model": "Federated PyGCN 2",
+  "device": "mps",
+  "n_samples": 4000,
+  "n_train": 3200,
+  "n_test": 800,
+  "n_proteins": 397,
+  "projected_undirected_edges": 30354,
+  "rounds": 5,
+  "local_epochs": 3,
+  "test_metrics": {
+    "n": 800,
+    "accuracy": 0.56,
+    "balanced_accuracy": 0.4962274763853599,
+    "f1": 0.21428571428571427,
+    "roc_auc": 0.5566460422445061
+  },
+  "site_test_metrics": [
+    {
+      "site": "site1",
+      "n": 267,
+      "accuracy": 0.5805243445692884,
+      "balanced_accuracy": 0.5,
+      "f1": 0.0,
+      "roc_auc": 0.5398617511520738
+    },
+    {
+      "site": "site2",
+      "n": 266,
+      "accuracy": 0.5,
+      "balanced_accuracy": 0.4912095639943741,
+      "f1": 0.4192139737991266,
+      "roc_auc": 0.507149554617909
+    },
+    {
+      "site": "site3",
+      "n": 267,
+      "accuracy": 0.599250936329588,
+      "balanced_accuracy": 0.5,
+      "f1": 0.0,
+      "roc_auc": 0.6102219626168224
+    }
+  ],
+  "config": {
+    "hidden_dim": 32,
+    "heads": 4,
+    "dropout": 0.2,
+    "lr": 0.001,
+    "weight_decay": 1e-05
+  }
+}
