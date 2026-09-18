@@ -1,25 +1,10 @@
 # ProGenome
 *A Federated Workflow for Genome Graph and Proteomic Integration*
 
-Genomics = variant-based phenotype-propensity reference graph to be combined with patient-specific proteomics data --> what can we learn by integrating these?
 
 ## 🎯 Our Mission
+To develop a federated workflow that integrates haploblock-based genome-graph with proteomic data from each participating institution.
 
-To develop a proof-of-concept workflow that integrates known genome-graph with proteomics, with a federated approach where each participating institution retains its individual-level data locally and trains the same graph-based model. Only model updates are exchanged with a coordinating server, which aggregates them into a shared model and returns the updated parameters for the next training round.
-
-## Background & Gap
-
-Genome Graph is a tool for displaying genome-wide data sets. The genome contains the relatively stable genetic blueprint of an individual, whereas the proteome captures what's happening in cells now. Protein abundance and function can change in response to disease, treatment, environmental exposure, and physiological stress. Furthermore, one gene may give rise to multiple protein products through alternative splicing and post-translational modifications, making the proteome highly complex. In addition, pooling individual-level genomic, proteomic, and clinical data from different institutions can be restricted.
-
-### Research Questions
-
-1. How can haploblock-based genomic information be connected to genes and proteomic data in a graph-based data model?
-
-2. Can a graph neural network combine genomic and proteomic information to identify disease-related phenotype clusters?
-
-3. [Aspirational:] Can a graph neural network trained across multiple institutions predict clinical outcomes without transferring individual-level data?
-
-### Brief flowchart
 
 <img width="711" height="384" alt="image" src="https://github.com/user-attachments/assets/fc0c51d3-af4f-4afe-bfbb-a674b07fac2c" />
 
@@ -28,10 +13,6 @@ Genome Graph is a tool for displaying genome-wide data sets. The genome contains
 The initial proof-of-concept demonstration will focus on chromosome 22, a test case before extending the workflow to additional chromosomes or the whole genome.
 
 The demo will integrate haplotype information, gene information, and proteomics.
-
-### Sept 17 workflow 
-
-![](docs/haplograph_baseline_model_schema.png)
 
 ### Required Datasets
 
@@ -62,13 +43,11 @@ From there, we leverage a graph that encodes how haploblock clusters co-occur ac
 
    Before connecting to the real genomic haploblock graph, we built a synthetic proteomics dataset to validate our data structure and analysis pipeline end-to-end.
 
-   **What we generated:**
+### *What we generated
    - Protein intensity values (log2 scale) for all ~460 unique proteins encoded by genes on chromosome 22
-   - 3 simulated hospital sites, 40 patients each (120 patients total)
+   - 3 simulated hospital sites, 4000 patients total
    - For every patient: age, sex, and a binary phenotype (case/control)
    - A deliberately injected signal: each protein's intensity depends, to varying degrees, on the patient's age, sex, and phenotype — some proteins strongly, most only weakly, to mimic real biological heterogeneity
-   
-   This lets us check whether our analysis can actually recover a known signal before applying it to real data later on.
    
    **Result:** the injected phenotype effect is clearly recoverable, and consistent across all 3 simulated sites:
    
