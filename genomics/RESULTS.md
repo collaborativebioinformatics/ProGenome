@@ -24,19 +24,19 @@ The team README asks three questions. This is how they were operationalised and 
 | 2 | Can a GNN combine genomic and proteomic information to identify disease-related phenotype clusters? | ablation genome / proteome / both on a synthetic phenotype with saved ground truth; controls; saliency against the planted causal clusters | done: 0.60 / 0.96 / 0.99 AUC; controls at chance; top-3 salient clusters all causal |
 | 3 | Can it be trained across institutions without transferring individual-level data? | NVFlare FedAvg, three sites, only weights exchanged, scored on the same held-out people as the central model | done in simulation: 0.987-0.998 vs 0.992-0.995 |
 
-```mermaid
-flowchart LR
-  A["data.haploblocks.org<br/>HaploGraph chr22 (pre-built)"] --> B["fetch_data.sh<br/>md5-verified download"] --> C["build_kg.py<br/>sparse carrier matrix,<br/>PyG HeteroData"] --> D["cooccurrence_analysis.py<br/>cluster / edge vs phenotype"] --> E["baseline.py<br/>logistic regression,<br/>shared split"] --> F["train_gnn.py<br/>hetero-GNN encoder"] --> G["embeddings.py<br/>silhouette, kNN, PCA plots"]
-```
-
-*v1, genome graph to phenotypes (`make run`).*
+**v1: genome graph to phenotypes** (`make run`)
 
 ```mermaid
-flowchart LR
-  H["proteomics_synth_1000g.py<br/>3 sites, 1000G ids,<br/>ground truth"] --> I["build_kg_v2.py<br/>hetero.pt from v1 + genes,<br/>proteins, harmonised MEASURED"] --> J["eda.py<br/>EDA report"] --> K["train_gnn_v2.py<br/>genome / proteome / both,<br/>controls, saliency"] --> L["proteome_linear_baseline.py<br/>ridge cis test"] --> M["graphrag_decoder.py<br/>NIM LLM, cited insight"] --> N["federated/job.py<br/>NVFlare FedAvg,<br/>3 sites + site-alone"]
+flowchart TB
+  A["data.haploblocks.org<br/>HaploGraph chr22 (pre-built)"] --> B["fetch_data.sh<br/>md5-verified download"] --> C["build_kg.py<br/>sparse carrier matrix, PyG HeteroData"] --> D["cooccurrence_analysis.py<br/>cluster / edge vs phenotype"] --> E["baseline.py<br/>logistic regression, shared split"] --> F["train_gnn.py<br/>hetero-GNN encoder"] --> G["embeddings.py<br/>silhouette, kNN, PCA plots"]
 ```
 
-*v2, proteomics, integration, decoder, federated (`make run-v2`, `make federated`).*
+**v2: proteomics, integration, decoder, federated** (`make run-v2`, `make federated`)
+
+```mermaid
+flowchart TB
+  H["proteomics_synth_1000g.py<br/>3 sites, 1000G ids, ground truth"] --> I["build_kg_v2.py<br/>hetero.pt from v1 + genes, proteins, harmonised MEASURED edges"] --> J["eda.py<br/>EDA report"] --> K["train_gnn_v2.py<br/>genome / proteome / both, controls, saliency"] --> L["proteome_linear_baseline.py<br/>ridge cis test"] --> M["graphrag_decoder.py<br/>NIM LLM, cited insight"] --> N["federated/job.py<br/>NVFlare FedAvg, 3 sites + site-alone"]
+```
 
 *Figure 1. The two pipeline chains. Each box is one script with a Makefile target; outputs land under `outputs/<stage>/chr22/`.*
 
