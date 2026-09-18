@@ -23,3 +23,25 @@ Protein nodes additionally store mean intensity, detection rate,
 phenotype-associated intensity difference, and haplograph degree, weight, and
 lift. For visualization, the full graph is summarized using the highest-degree
 nodes rather than randomly subsampling edges.
+
+All preprocessing and tabular data integration were performed with Python
+using pandas and NumPy. Logistic regression, train/test splitting, filtering
+support, cross-validation, and performance metrics were implemented with
+scikit-learn. Matplotlib and seaborn were used for the confusion matrix,
+coefficient, and summary plots. NetworkX was used to represent the
+haploblock–protein knowledge graph, calculate network summaries, select
+interpretable subgraphs, and lay out the network visualizations. PyTorch
+Geometric (PyG) was not used for the original logistic-regression or
+knowledge-graph construction workflow; it was added separately for the
+graph-neural-network comparison described below.
+
+For the graph-neural-network comparison, PyTorch and PyTorch Geometric were
+used to create one graph per patient. Each graph used the shared
+haplograph-derived protein network, with each protein node represented by the
+patient's measured abundance plus standardized haplograph degree, weight, and
+lift. A two-layer GCN followed by global mean pooling and a small
+covariate-aware classifier predicted phenotype. To keep computation tractable,
+the protein network was projected from haploblock membership and restricted to
+the 2,000 highest-weight projected protein edges. The PyG model used the same
+site-by-phenotype stratified split and five-fold training-set cross-validation
+as the logistic-regression model.

@@ -1,0 +1,25 @@
+{
+  "model": "PyG GCN",
+  "n_samples": 4000,
+  "n_proteins": 397,
+  "projected_edges": 2000,
+  "epochs": 8,
+  "test_metrics": {
+    "accuracy": 0.40875,
+    "balanced_accuracy": 0.5,
+    "f1": 0.580301685891748,
+    "roc_auc": 0.5117313523543521
+  },
+  "cv_mean": {
+    "accuracy": 0.476875,
+    "balanced_accuracy": 0.4937760006462296,
+    "f1": 0.4482404516511999,
+    "roc_auc": 0.49592168504382245
+  },
+  "cv_std": {
+    "accuracy": 0.05550065103784819,
+    "balanced_accuracy": 0.014728851106561053,
+    "f1": 0.13425029805908437,
+    "roc_auc": 0.017914977363615962
+  }
+}
