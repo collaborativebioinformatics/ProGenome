@@ -21,6 +21,7 @@ same sample IDs**, trains a heterogeneous **PyTorch Geometric GNN**, and decodes
 with an **LLM (NVIDIA NIM)** into a cited insight. Everything runs from a clone; chr22 takes ~10 min on a laptop CPU
 and ~2 min on an A100.
 
+Presentation slides: [Team 3: ProGenome (Google Slides)](https://docs.google.com/presentation/d/13wHiF-xPHeDyy7XYMmTSwxAYUswgSutH7x7dZ02SOOs/edit) · Results page: [RESULTS.md](RESULTS.md) ·
 Architecture page (data flow, schema, federated topology, stack): `docs/architecture.html` ·
 Mermaid source for Lucidchart / GitHub: `docs/architecture.mmd`.
 

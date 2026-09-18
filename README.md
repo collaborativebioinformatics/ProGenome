@@ -1,6 +1,8 @@
 # ProGenome
 *A Federated Workflow for Genome Graph and Proteomic Integration*
 
+📊 **Presentation slides:** [Team 3: ProGenome (Google Slides)](https://docs.google.com/presentation/d/13wHiF-xPHeDyy7XYMmTSwxAYUswgSutH7x7dZ02SOOs/edit) · 📄 **Genomics methods and results:** [genomics/RESULTS.md](genomics/RESULTS.md)
+
 
 ## 🎯 Our Mission
 To develop a federated workflow that integrates haploblock-based genome-graph with proteomic data from each participating institution.

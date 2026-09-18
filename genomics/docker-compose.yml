@@ -23,8 +23,9 @@ services:
       timeout: 5s
       retries: 20
 
-  # GPU pipeline image (see Dockerfile); run stages with e.g.
-  #   docker compose run --rm pipeline python train_gnn.py --target ancestry
+  # GPU pipeline image (see Dockerfile). Its entrypoint is bash, so pass commands with -c, e.g.
+  #   docker compose run --rm pipeline -c "python train_gnn.py --target ancestry"
+  #   docker compose run --rm pipeline -c "python neo4j_load.py --chrom chr22"      # loads the graph into the neo4j service
   pipeline:
     build:
       context: ..
