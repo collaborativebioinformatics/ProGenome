@@ -41,32 +41,37 @@ filtering was learned from training samples only:
 
 ### Federated-learning setup
 
-The federated experiment used three simulated institutions (`site1`, `site2`,
-and `site3`). Each site retained its local sample rows and trained the same
-binary logistic model locally. The coordinator initialized the shared
-coefficient vector and intercept to zero. Before training, the feature schema
-was aligned across sites; median imputation and standardization were fit on the
-combined schema for this reproducible simulation, while patient-level rows
-were still kept within each site during model updates.
+The federated experiment used the same 4,000 samples as the centralized
+analysis, distributed across three simulated institutions (`site1`, `site2`,
+and `site3`). Site 1 contained 1,334 samples, Site 2 contained 1,333, and
+Site 3 contained 1,333. Each site retained its local patient rows and trained
+the same binary logistic model locally.
 
-Training used five communication rounds. In each round, every site performed
-one local gradient update using its own samples, starting from the current
-global parameters. With learning rate 0.1 and L2 regularization 1e-4, site
-`k` returned its updated coefficients and intercept (equivalently, its
-parameter update). The coordinator then applied sample-count-weighted FedAvg:
+A single site-by-phenotype stratified 80/20 split was created before local
+training, preserving case/control proportions within each site. This produced
+3,200 training samples and 800 held-out test samples. Each site's local model
+used only its own portion of the 3,200-sample training partition; the held-out
+rows were not used for local updates.
+
+The coordinator initialized the shared coefficient vector and intercept to
+zero. Feature preprocessing used a common feature schema, with median
+imputation and standardization learned from training data. Training used five
+communication rounds. In each round, every site performed one local gradient
+update using its own training samples and the current global parameters. With
+learning rate 0.1 and L2 regularization 1e-4, site `k` returned its updated
+coefficients and intercept. The coordinator applied sample-count-weighted
+FedAvg:
 
 ```text
 w_global = sum_k(n_k * w_k) / sum_k(n_k)
 b_global = sum_k(n_k * b_k) / sum_k(n_k)
 ```
 
-The updated global parameters were sent back for the next round. With 40
-samples per site in this federated demo, all sites receive equal weight. Only
-model parameters are exchanged by the algorithm; raw patient rows and local
-predictions remain at the sites. The executable implementation is
-`scripts/run_federated_comparison.py`; `scripts/run_nvflare_comparison.py`
-provides the NVFlare-compatible entry point for the same deterministic
-comparison.
+The updated global parameters were sent back for the next round. The final
+global model was evaluated on the untouched 800-sample test partition, with
+metrics reported separately for each site and averaged across sites. Only model
+parameters are exchanged by the algorithm; raw patient rows and local
+predictions remain at the sites.
 
 Three federated feature configurations were evaluated:
 
@@ -141,21 +146,23 @@ positives, 63 false negatives, and 264 true positives.
 
 ### Federated classification comparison
 
-Metrics below are the mean across the three sites after five FedAvg rounds;
-all three sites produced the same values in this synthetic federated demo.
+The table reports the mean across the three sites after five FedAvg rounds. Each
+mean is calculated from the site-specific metrics on the held-out test samples;
+there were 800 held-out samples in total.
 
-| Feature configuration | Accuracy | Balanced accuracy | F1 score | ROC AUC | Difference from proteomics-only ROC AUC |
+| Feature configuration | Accuracy | Balanced accuracy | F1 score | ROC AUC | ROC AUC difference vs proteomics-only |
 |---|---:|---:|---:|---:|---:|
-| Proteomics only | 1.000 | 1.000 | 1.000 | 1.000 | 0.000 |
-| Proteomics + age + sex | 1.000 | 1.000 | 1.000 | 1.000 | 0.000 |
-| Proteomics + age + sex + haplograph | 1.000 | 1.000 | 1.000 | 1.000 | 0.000 |
+| Proteomics only | 0.892 | 0.897 | 0.875 | 0.962 | 0.000 |
+| Proteomics + age + sex | 0.890 | 0.895 | 0.872 | 0.962 | +0.0003 |
+| Proteomics + age + sex + haplograph | 0.892 | 0.897 | 0.875 | 0.962 | +0.0001 |
 
-In this deliberately strong synthetic dataset, protein measurements alone
-separated the two classes perfectly at every site. Adding age, sex, and the
-haplograph summaries therefore produced no measurable improvement in accuracy,
-F1, or ROC AUC. This equality should not be interpreted as evidence that the
-additional features are uninformative in real data; it indicates that the
-synthetic phenotype signal is already fully recoverable from proteomics.
+Using all 4,000 samples with a held-out evaluation removes the earlier
+training-set optimism. Proteomics alone gave the strongest or essentially tied
+performance across the metrics. Adding age and sex changed the mean ROC AUC by
+less than 0.001, while adding the haplograph summaries changed it by less than
+0.001. These very small differences indicate that the synthetic proteomic
+signal dominates the federated classification task; they should not be treated
+as evidence that covariates or graph features are unimportant in real data.
 
 ### Graph size and graph/model comparison
 
