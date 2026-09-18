@@ -24,6 +24,10 @@ The team README asks three questions. This is how they were operationalised and 
 | 2 | Can a GNN combine genomic and proteomic information to identify disease-related phenotype clusters? | ablation genome / proteome / both on a synthetic phenotype with saved ground truth; controls; saliency against the planted causal clusters | done: 0.60 / 0.96 / 0.99 AUC; controls at chance; top-3 salient clusters all causal |
 | 3 | Can it be trained across institutions without transferring individual-level data? | NVFlare FedAvg, three sites, only weights exchanged, scored on the same held-out people as the central model | done in simulation: 0.987-0.998 vs 0.992-0.995 |
 
+![System architecture](docs/report/figures/architecture_slide.png)
+
+*Figure 0. System architecture: private hospital sites on the left, the shared reference graph and the GNN encoder trained through the NVFlare server in the middle, the model's outputs and the LLM decoder on the right.*
+
 **v1: genome graph to phenotypes** (`make run`)
 
 ```mermaid

@@ -500,8 +500,62 @@ def init_comparison():
     fig.tight_layout(); fig.savefig(FIG / "init_comparison.png", dpi=150, bbox_inches="tight"); plt.close(fig)
 
 
+# --------------------------------------------------------------------- 13. one-slide system architecture (16:9)
+def architecture_slide():
+    fig, ax = plt.subplots(figsize=(16, 9)); ax.set_xlim(0, 1); ax.set_ylim(0, 1); ax.axis("off")
+    PUR, PURF, PAD = "#7a5af8", "#f1eefe", 0.006
+    def a(x1, y1, x2, y2, color=INK, text=None, lw=1.6, dy=0.018):
+        ax.annotate("", xy=(x2, y2), xytext=(x1, y1), arrowprops=dict(arrowstyle="-|>", lw=lw, color=color, mutation_scale=16))
+        if text: ax.text((x1 + x2) / 2, (y1 + y2) / 2 + dy, text, ha="center", va="bottom", fontsize=10, color=color)
+    ax.text(0.5, 0.975, "ProGenome: person-level genome graph + local proteomics, one GNN trained federated, decoded by an LLM", ha="center", va="top", fontsize=15, weight="bold", color=INK)
+    # ---- left: hospital sites (private)
+    SX, SW, SH = 0.02, 0.21, 0.19
+    ax.text(SX + SW / 2, 0.905, "HOSPITAL SITES  (private, never leave)", ha="center", fontsize=11.5, weight="bold", color=PUR)
+    for i, (name, n) in enumerate([("Site 1", "835 people"), ("Site 2", "835 people"), ("Site 3", "833 people")]):
+        y = 0.66 - i * 0.24
+        ax.add_patch(FancyBboxPatch((SX, y), SW, SH, boxstyle=f"round,pad={PAD}", fc=PURF, ec=PUR, ls="--", lw=1.6))
+        ax.text(SX + SW / 2, y + SH - 0.035, f"{name}  ({n})", ha="center", va="center", fontsize=11.5, weight="bold", color=INK)
+        ax.text(SX + SW / 2, y + SH / 2 - 0.02, "Individual nodes + labels\nCARRIES: haplotype clusters carried\nMEASURED: local protein levels (z)", ha="center", va="center", fontsize=9.5, color=INK)
+    # ---- middle top: shared reference graph
+    GX, GW = 0.29, 0.42
+    ax.add_patch(FancyBboxPatch((GX, 0.70), GW, 0.17, boxstyle=f"round,pad={PAD}", fc="#d9efee", ec=TEAL, lw=1.6))
+    ax.text(GX + GW / 2, 0.845, "SHARED REFERENCE GRAPH  (public, identical at every site)", ha="center", va="center", fontsize=10.5, weight="bold", color=INK)
+    chain = [("Cluster\n6,551", 0.315), ("Block\n669", 0.415), ("Gene\n458", 0.515), ("Protein\n460", 0.615)]
+    for (txt, x) in chain:
+        box(ax, x, 0.725, 0.07, 0.07, txt, fc="#ffffff", ec=TEAL, fs=9.5, pad=0.004)
+    for (_, x1), (_, x2) in zip(chain, chain[1:]):
+        a(x1 + 0.074, 0.76, x2 - 0.004, 0.76, TEAL, lw=1.3)
+    ax.text(0.35, 0.805, "CO_OCCURS (lift)", ha="center", fontsize=8.5, color=GREY); ax.text(0.465, 0.71, "IN_BLOCK · OVERLAPS · ENCODES  (haploblocks.org + UniProt)", ha="center", va="top", fontsize=8.5, color=GREY)
+    # ---- middle: encoder
+    EX, EW, EY, EH = 0.33, 0.34, 0.40, 0.22
+    box(ax, EX, EY, EW, EH, "GNN ENCODER  (PyTorch Geometric)\nHeteroConv x 2, hidden 64\nSAGEConv + edge-weighted GraphConv\n\nperson input: SVD-32 / carrier row + protein z\ntrained on labels of training people only", fc="#ffffff", ec=TEAL, fs=10, pad=PAD)
+    a(0.5, 0.70 - PAD, 0.5, EY + EH + PAD, TEAL, "message passing over the graph", dy=0.012)
+    # ---- middle bottom: NVFlare server
+    box(ax, 0.37, 0.10, 0.26, 0.15, "NVFlare SERVER  (FedAvg)\naverages the site weights\nreturns the global model\n30 rounds x 5 local epochs", fc="#ffffff", ec=INK, fs=10, pad=PAD)
+    a(0.5, 0.25 + PAD, 0.5, EY - PAD, INK, "global model", dy=0.012)
+    # sites -> encoder / server
+    for i in range(3):
+        y = 0.66 - i * 0.24 + SH / 2
+        a(SX + SW + PAD, y, EX - PAD, EY + EH * (0.8 - 0.3 * i), PUR, lw=1.4)      # private edges into the model at its own site
+    ax.text(0.255, 0.885, "each site trains the same model on its own people", ha="left", fontsize=9, color=PUR, style="italic")
+    a(SX + SW + PAD, 0.20, 0.37 - PAD, 0.175, INK, "weights only", dy=0.012)
+    # ---- right: outputs and decoder
+    OX, OW = 0.745, 0.235
+    ax.text(OX + OW / 2, 0.905, "WHAT COMES OUT", ha="center", fontsize=11.5, weight="bold", color=INK)
+    outs = [("prediction per person\n(ancestry, population, case/control)", 0.76), ("64-d embedding per person and cluster", 0.65), ("saliency: which clusters drive the score", 0.54)]
+    for txt, y in outs:
+        box(ax, OX, y, OW, 0.085, txt, fc="#ffffff", ec=INK, fs=9.5, pad=PAD); a(EX + EW + PAD, EY + EH / 2, OX - PAD, y + 0.0425, INK, lw=1.3)
+    box(ax, OX, 0.30, OW, 0.17, "LLM DECODER  (NVIDIA NIM)\nNemotron 3 Super\nGraphRAG: graph facts + prediction\n-> cited report per person\nevery cited id is checked", fc="#f6e7cf", ec=AMBER, fs=10, pad=PAD)
+    for y in (0.76, 0.65, 0.54):
+        a(OX + OW / 2 + (y - 0.65) * 0.9, y - PAD, OX + OW / 2 + (y - 0.65) * 0.9, 0.47 + PAD, AMBER, lw=1.3)
+    box(ax, OX, 0.10, OW, 0.14, "held-out results (chr22)\nAUC genome 0.60 / proteome 0.96 / both 0.99\nfederated 0.987-0.998 vs central 0.992-0.995\ncontrols (sex, site) at chance", fc="#ffffff", ec=INK, fs=9, pad=PAD)
+    ax.text(0.5, 0.025, "Stack: PyTorch 2.14 · PyTorch Geometric 2.8 · CUDA 12.6 · NVIDIA FLARE 2.9 · NVIDIA NIM · Neo4j 5.26 · Docker · NVIDIA Brev A100 80 GB      Data: 1000 Genomes HaploGraph chr22 (haploblocks.org), UniProt, synthetic proteomics on 1000G ids",
+            ha="center", fontsize=9.5, color=GREY)
+    fig.savefig(FIG / "architecture_slide.png", dpi=200, bbox_inches="tight", facecolor="white"); plt.close(fig)
+
+
 if __name__ == "__main__":
-    for fn in (sync_pipeline_figures, workflow, schema, genome_schematic, federated_topology, person_neighbourhood, sites, gnn_results, federated_and_inference, eda_extra, confusion_matrices, data_flow_map, federated_site_alone, init_comparison):
+    for fn in (sync_pipeline_figures, workflow, schema, genome_schematic, federated_topology, person_neighbourhood, sites, gnn_results, federated_and_inference, eda_extra, confusion_matrices, data_flow_map, federated_site_alone, init_comparison, architecture_slide):
         try:
             fn(); print("ok  ", fn.__name__)
         except Exception as exc:  # keep going; report which figure failed

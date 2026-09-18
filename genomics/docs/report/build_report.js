@@ -306,7 +306,7 @@ const CONTENT = [
      "From simulation to real machines: NVFlare's POC mode starts a server and clients as separate processes (or machines) with the same job; each client would run client.py against its own kg-dir and split; the L4 and A100 instances could be two such sites. Adding a real fourth site means: its own people with 1000G-style ids, its own protein matrix keyed by those ids, its own harmoniser pass, and the shared graph files copied over."]),
 
   h(2, "12. System design, tech stack and deployment"),
-  f("architecture.png", "The architecture page (docs/architecture.html): data lanes, schema, federated topology, stack and measured numbers.", 0.95),
+  f("architecture_slide.png", "System architecture on one page: private hospital sites, the shared reference graph, the GNN encoder trained through the NVFlare server, and the outputs feeding the LLM decoder.", 0.98),
   t(["Layer", "Choice", "Notes"], [
     ["Language and data", "Python 3.13, pandas 3.0, scipy 1.18 (sparse), scikit-learn 1.9", "pinned in requirements.txt"],
     ["Graph learning", "PyTorch 2.14, PyTorch Geometric 2.8, pyg-lib (random walks for Node2Vec)", "torch_cluster is deprecated in favour of pyg-lib; that caused the first image-build failure"],
