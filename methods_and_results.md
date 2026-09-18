@@ -168,7 +168,7 @@ exploratory visualization, not a statistical significance test.
 ![Figure 5: Haplograph-only network](proteomics/graph_comparison/haplograph_network.png)
 
 Each node is a high-degree haploblock labeled only with its mapped protein
-name(s), rather than its cluster identifier. Larger nodes have higher degree
+name(s); no cluster identifiers are shown. Larger nodes have higher degree
 in the displayed subgraph. Each edge is labeled with `w` (co-occurrence
 weight) and `l` (lift); edge width also represents the logarithm of weight,
 while edge color represents lift. Higher lift means stronger co-occurrence
