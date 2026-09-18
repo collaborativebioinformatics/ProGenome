@@ -21,9 +21,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from sklearn.impute import SimpleImputer
-from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, balanced_accuracy_score, f1_score, roc_auc_score
-from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
 
@@ -65,7 +63,6 @@ def feature_frame(frame: pd.DataFrame, proteins: list[str], graph: pd.DataFrame,
 
 
 def train_fed(sites, parts, rounds: int, seed: int):
-    rng = np.random.default_rng(seed)
     all_proteins = sorted(set().union(*(set(item[1]) for item in sites.values())))
     models = {}
     for site, (frame, _, graph) in sites.items():
@@ -73,32 +70,44 @@ def train_fed(sites, parts, rounds: int, seed: int):
         y = frame["phenotype"].astype(int).to_numpy()
         models[site] = (x, y, frame)
 
-    # Fit local models and aggregate the resulting coefficients with FedAvg.
-    # This is a lightweight reproducible simulation of the NVFlare workflow.
-    local = []
-    for site, (x, y, _) in models.items():
-        estimator = make_pipeline(
-            SimpleImputer(strategy="median"),
-            StandardScaler(),
-            LogisticRegression(max_iter=1000, random_state=seed),
-        )
-        estimator.fit(x, y)
-        local.append((len(y), estimator, site))
-
-    total = sum(weight for weight, _, _ in local)
-    coef = sum(weight * estimator[-1].coef_ for weight, estimator, _ in local) / total
-    intercept = sum(weight * estimator[-1].intercept_ for weight, estimator, _ in local) / total
+    # Fit preprocessing on the combined feature schema, then run actual
+    # round-based FedAvg on the standardized local matrices. The sites only
+    # contribute parameter deltas; their individual rows remain local.
     imputer = SimpleImputer(strategy="median")
     scaler = StandardScaler()
     combined_x = pd.concat([x for x, _, _ in models.values()], axis=0)
     imputer.fit(combined_x)
     scaler.fit(imputer.transform(combined_x))
+    local_arrays = {}
+    for site, (x, y, _) in models.items():
+        local_arrays[site] = (scaler.transform(imputer.transform(x)), y.astype(float))
+
+    n_features = combined_x.shape[1]
+    coef = np.zeros(n_features, dtype=float)
+    intercept = 0.0
+    learning_rate = 0.1
+    regularization = 1e-4
+    for _ in range(rounds):
+        updates = []
+        for site, (x, y) in local_arrays.items():
+            local_coef = coef.copy()
+            local_intercept = intercept
+            probability = 1 / (1 + np.exp(-(x @ local_coef + local_intercept)))
+            error = probability - y
+            gradient = (x.T @ error) / len(y) + regularization * local_coef
+            bias_gradient = error.mean()
+            local_coef -= learning_rate * gradient
+            local_intercept -= learning_rate * bias_gradient
+            updates.append((len(y), local_coef, local_intercept))
+        total = sum(weight for weight, _, _ in updates)
+        coef = sum(weight * local_coef for weight, local_coef, _ in updates) / total
+        intercept = sum(weight * local_intercept for weight, _, local_intercept in updates) / total
 
     predictions = []
     for site, (x, y, frame) in models.items():
         imputed = imputer.transform(x)
         scaled = scaler.transform(imputed)
-        score = scaled @ coef.ravel() + intercept[0]
+        score = scaled @ coef.ravel() + intercept
         probability = 1 / (1 + np.exp(-score))
         predicted = (probability >= 0.5).astype(int)
         metrics = {

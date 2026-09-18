@@ -39,6 +39,42 @@ filtering was learned from training samples only:
 - For protein pairs with absolute Pearson correlation above 0.8, retain the
   higher-variance protein
 
+### Federated-learning setup
+
+The federated experiment used three simulated institutions (`site1`, `site2`,
+and `site3`). Each site retained its local sample rows and trained the same
+binary logistic model locally. The coordinator initialized the shared
+coefficient vector and intercept to zero. Before training, the feature schema
+was aligned across sites; median imputation and standardization were fit on the
+combined schema for this reproducible simulation, while patient-level rows
+were still kept within each site during model updates.
+
+Training used five communication rounds. In each round, every site performed
+one local gradient update using its own samples, starting from the current
+global parameters. With learning rate 0.1 and L2 regularization 1e-4, site
+`k` returned its updated coefficients and intercept (equivalently, its
+parameter update). The coordinator then applied sample-count-weighted FedAvg:
+
+```text
+w_global = sum_k(n_k * w_k) / sum_k(n_k)
+b_global = sum_k(n_k * b_k) / sum_k(n_k)
+```
+
+The updated global parameters were sent back for the next round. With 40
+samples per site in this federated demo, all sites receive equal weight. Only
+model parameters are exchanged by the algorithm; raw patient rows and local
+predictions remain at the sites. The executable implementation is
+`scripts/run_federated_comparison.py`; `scripts/run_nvflare_comparison.py`
+provides the NVFlare-compatible entry point for the same deterministic
+comparison.
+
+Three federated feature configurations were evaluated:
+
+1. **Proteomics only:** protein abundance measurements.
+2. **Proteomics + covariates:** protein abundance, age, and sex.
+3. **Proteomics + covariates + haplograph:** the previous features plus
+   abundance-weighted graph degree, graph weight, and graph lift summaries.
+
 ### Logistic-regression model
 
 The reference classifier was implemented with **scikit-learn**. Median
@@ -102,6 +138,24 @@ cross-validation as the logistic-regression reference.
 
 The held-out confusion matrix contained 420 true negatives, 53 false
 positives, 63 false negatives, and 264 true positives.
+
+### Federated classification comparison
+
+Metrics below are the mean across the three sites after five FedAvg rounds;
+all three sites produced the same values in this synthetic federated demo.
+
+| Feature configuration | Accuracy | Balanced accuracy | F1 score | ROC AUC | Difference from proteomics-only ROC AUC |
+|---|---:|---:|---:|---:|---:|
+| Proteomics only | 1.000 | 1.000 | 1.000 | 1.000 | 0.000 |
+| Proteomics + age + sex | 1.000 | 1.000 | 1.000 | 1.000 | 0.000 |
+| Proteomics + age + sex + haplograph | 1.000 | 1.000 | 1.000 | 1.000 | 0.000 |
+
+In this deliberately strong synthetic dataset, protein measurements alone
+separated the two classes perfectly at every site. Adding age, sex, and the
+haplograph summaries therefore produced no measurable improvement in accuracy,
+F1, or ROC AUC. This equality should not be interpreted as evidence that the
+additional features are uninformative in real data; it indicates that the
+synthetic phenotype signal is already fully recoverable from proteomics.
 
 ### Graph size and graph/model comparison
 
