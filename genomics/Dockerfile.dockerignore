@@ -1,0 +1,15 @@
+# Build context is the repository root (docker build -f genomics/Dockerfile ..); keep the context small.
+# BuildKit reads <Dockerfile>.dockerignore next to the Dockerfile.
+*
+!genomics/**
+!proteomics/uniprot_chr22.bed
+!proteomics/synthetic_proteomics_chr22/gene_symbol_cache.csv
+genomics/data
+genomics/outputs
+genomics/outputs_brev
+genomics/.venv
+genomics/.env
+genomics/docs/report/*.pdf
+genomics/docs/report/*.docx
+**/__pycache__
+**/.pytest_cache

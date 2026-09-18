@@ -1,0 +1,67 @@
+%% ProGenome architecture — Mermaid source.
+%% Lucidchart: Insert → Diagram as code → Mermaid → paste.  GitHub renders it in a ```mermaid fence.
+flowchart LR
+  subgraph SRC["Sources"]
+    HG["HaploGraph · 1000G · GRCh38<br/>nodes.csv.gz 248,254 × 2,548<br/>edges lift ≥ 5 · 187,030<br/>block_stats · phenotypes_real.csv"]
+    PR["Proteomics per site · 1000G IDs<br/>uniprot_chr22.bed · 460 proteins<br/>site1..3_proteomics_log2.csv<br/>synthetic + ground truth today · Wu 2013 / UKB-PPP next"]
+  end
+
+  subgraph BUILD["Graph build · schema"]
+    KG1["build_kg.py → hetero.pt<br/>pandas · scipy CSR int8<br/>Individual · Cluster · Block<br/>CARRIES 2.37M · CO_OCCURS 187k · IN_BLOCK · NEXT_BLOCK"]
+    KG2["build_kg_v2.py → hetero_v2.pt<br/>harmoniser: robust z per site × protein<br/>Gene 458 · Protein 460<br/>OVERLAPS 1,063 · ENCODES 460 · MEASURED 1.07M"]
+    NEO["Neo4j 5.26 community<br/>neo4j_load.py → localhost:7474"]
+    NX["NetworkX 3.6 / nx-cugraph<br/>stats · GraphML · region plots"]
+  end
+
+  subgraph EMB["Embeddings"]
+    SVD["SVD-32<br/>scipy svds on carriers<br/>shared individual/cluster space"]
+    N2V["Node2Vec<br/>pyg-lib random walks · GPU"]
+  end
+
+  subgraph GNN["GNN · PyTorch Geometric 2.8 · CUDA"]
+    ENC["HeteroConv × 2 · hidden 64<br/>SAGEConv: carries · in_block · next_block · overlaps · encodes<br/>GraphConv weighted: co_occurs (log lift) · measured (z)<br/>input: SVD-32 or raw carrier row + protein z & mask<br/>heads: phenotype CE · proteome masked MSE<br/>controls: sex (autosome) · site (batch)"]
+  end
+
+  subgraph INF["Inference"]
+    IE["infer.py<br/>eager 36 ms → torch.compile 4.9 ms (7.5×)<br/>Torch-TensorRT fp16 · A100 80 GB"]
+  end
+
+  subgraph DEC["Decoder"]
+    RAG["GraphRAG<br/>KG neighbourhood + GNN logits/embeddings<br/>→ NVIDIA NIM LLM (Nemotron 3 Super)<br/>stretch: PyG G-Retriever"]
+    OUT["Insights per patient<br/>cited to cluster / block / protein ids"]
+  end
+
+  HG -- "fetch_data.sh (md5)" --> KG1
+  PR -- "measured_long.csv" --> KG2
+  KG1 -- "joins on sample ID (HG00096…)" --> KG2
+  KG1 -- "display before embedding" --> NEO
+  KG1 --> NX
+  KG1 -- "carries.npz" --> SVD
+  KG1 -- "carries + co_occurs" --> N2V
+  SVD -- "32-dim init" --> ENC
+  N2V -- "32-dim init" --> ENC
+  KG1 -- "genome edges + cluster/block stats" --> ENC
+  KG2 -- "measured · overlaps · encodes + z vector" --> ENC
+  ENC -- "model.pt · embeddings" --> IE
+  IE -- "logits + 64-d embeddings" --> RAG
+  RAG --> OUT
+
+  subgraph RUN["Runtime"]
+    DK["Docker: pytorch/pytorch:2.14.0-cuda12.6-cudnn9-runtime<br/>torch_geometric 2.8.0 · pyg-lib · nx-cugraph · torch-tensorrt 2.14<br/>compose: neo4j:5.26-community + pipeline"]
+    HW["Brev A100 80 GB (Crusoe, $1.98/h) · L4 24 GB (GCP)<br/>Mac M2 CPU for dev (~10 min end-to-end)<br/>make setup | run | docker | neo4j-load | brev"]
+  end
+
+  subgraph FED["Federated (NVFlare FedAvg)"]
+    S1["Site 1 (private)<br/>Individual · CARRIES · MEASURED"]
+    S2["Site 2 (private)"]
+    S3["Site 3 (private)"]
+    SRV["NVFlare server<br/>averages weights by n<br/>returns global model"]
+    SHARED["Shared, public: Cluster · Block · Gene · Protein graph + encoder weights"]
+  end
+  S1 -- "weights only" --> SRV
+  S2 -- "weights only" --> SRV
+  S3 -- "weights only" --> SRV
+  SRV -. "global model" .-> S1
+  SHARED --- S1
+  SHARED --- S2
+  SHARED --- S3

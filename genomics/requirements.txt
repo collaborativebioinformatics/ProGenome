@@ -1,0 +1,14 @@
+# Pinned to the versions the chr22 results were produced with (2026-09-17).
+# torch itself is installed separately (CPU or CUDA index) - see setup.sh / Dockerfile.
+# torch==2.14.0
+torch_geometric==2.8.0.post1
+pandas==3.0.5
+scipy==1.18.1
+scikit-learn==1.9.1
+matplotlib==3.11.2
+pyarrow==25.0.1
+networkx==3.6.1
+neo4j==6.3.1
+pytest==9.1.1
+tabulate==0.10.0
+nvflare==2.9.0
