@@ -120,6 +120,13 @@ included in the classifier. PyGCN 2 used three candidate hyperparameter sets,
 selected the best by a stratified validation split, trained with early
 stopping, and used the same held-out test split and five-fold training-set
 cross-validation as the logistic-regression reference.
+PyGCN 1 was therefore a smaller two-layer GCN with a 2,000-edge graph,
+without attention or edge attributes, whereas PyGCN 2 used two attention-based
+GATv2Conv layers with hidden dimensions and attention heads selected by tuning
+on the validation split. PyGCN 2 also used the complete projected graph,
+weight/lift edge features, AdamW optimization, dropout, gradient clipping, and
+early stopping; its shared-graph pooling strategy reduced memory use compared
+with creating a separate full graph for every patient.
 
 ## 2. Results
 
