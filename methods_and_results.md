@@ -39,32 +39,34 @@ filtering was learned from training samples only:
 
 ### Federated-learning setup
 
-The federated experiment used three simulated institutions (`site1`, `site2`,
-and `site3`). Each site retained its local sample rows and trained the same
-binary logistic model locally. The coordinator initialized the shared
-coefficient vector and intercept to zero. Before training, the feature schema
-was aligned across sites; median imputation and standardization were fit on the
-combined schema for this reproducible simulation, while patient-level rows
-were still kept within each site during model updates.
+The federated experiment used the same 4,000 samples as the centralized
+analysis, distributed across three simulated institutions (`site1`, `site2`,
+and `site3`). Site 1 contained 1,334 samples, Site 2 contained 1,333, and
+Site 3 contained 1,333. Each site retained its local patient rows and trained
+the same binary classifier locally.
+
+A site-by-phenotype stratified 80/20 split produced 3,200 training samples
+and 800 held-out test samples. Each site trained only on its local portion of
+the training partition; the held-out rows were not used for local updates. The
+coordinator initialized the shared coefficient vector and intercept to zero.
+The common feature schema used median imputation and standardization learned
+from training data.
 
 Training used five communication rounds. In each round, every site performed
-one local gradient update using its own samples, starting from the current
-global parameters. With learning rate 0.1 and L2 regularization 1e-4, site
-`k` returned its updated coefficients and intercept (equivalently, its
-parameter update). The coordinator then applied sample-count-weighted FedAvg:
+one local gradient update using its own training samples and the current global
+parameters. With learning rate 0.1 and L2 regularization 1e-4, site `k`
+returned updated coefficients and an intercept. The coordinator applied
+sample-count-weighted FedAvg:
 
 ```text
 w_global = sum_k(n_k * w_k) / sum_k(n_k)
 b_global = sum_k(n_k * b_k) / sum_k(n_k)
 ```
 
-The updated global parameters were sent back for the next round. With 40
-samples per site in this federated demo, all sites receive equal weight. Only
-model parameters are exchanged by the algorithm; raw patient rows and local
-predictions remain at the sites. The executable implementation is
-`scripts/run_federated_comparison.py`; `scripts/run_nvflare_comparison.py`
-provides the NVFlare-compatible entry point for the same deterministic
-comparison.
+The updated global parameters were returned for the next round. The final
+global model was evaluated on the untouched 800-sample test partition, with
+metrics reported per site and averaged across sites. Only model parameters are
+exchanged; raw patient rows and local predictions remain at the sites.
 
 Three federated feature configurations were evaluated:
 
@@ -72,6 +74,16 @@ Three federated feature configurations were evaluated:
 2. **Proteomics + covariates:** protein abundance, age, and sex.
 3. **Proteomics + covariates + haplograph:** the previous features plus
    abundance-weighted graph degree, graph weight, and graph lift summaries.
+
+### Federated PyGCN 2
+
+A federated version of PyGCN 2 used the same complete 30,354-edge undirected
+protein graph at every site. Each site trained locally for three epochs per
+round; after each of five rounds, the coordinator aggregated the GATv2 model
+parameters with sample-count-weighted FedAvg and returned the global parameters
+to the sites. Protein abundances, phenotype labels, and covariates remained
+site-local; only model parameters were aggregated. The final global model was
+evaluated on the same 800 held-out samples.
 
 ### Logistic-regression model
 
@@ -146,21 +158,34 @@ positives, 63 false negatives, and 264 true positives.
 
 ### Federated classification comparison
 
-Metrics below are the mean across the three sites after five FedAvg rounds;
-all three sites produced the same values in this synthetic federated demo.
+The following values are means across the three sites after five FedAvg rounds;
+800 held-out samples were evaluated in total.
 
-| Feature configuration | Accuracy | Balanced accuracy | F1 score | ROC AUC | Difference from proteomics-only ROC AUC |
+| Feature configuration | Accuracy | Balanced accuracy | F1 score | ROC AUC | ROC AUC difference vs proteomics-only |
 |---|---:|---:|---:|---:|---:|
-| Proteomics only | 1.000 | 1.000 | 1.000 | 1.000 | 0.000 |
-| Proteomics + age + sex | 1.000 | 1.000 | 1.000 | 1.000 | 0.000 |
-| Proteomics + age + sex + haplograph | 1.000 | 1.000 | 1.000 | 1.000 | 0.000 |
+| Proteomics only | 0.892 | 0.897 | 0.875 | 0.962 | 0.0000 |
+| Proteomics + age + sex | 0.890 | 0.895 | 0.872 | 0.962 | +0.0003 |
+| Proteomics + age + sex + haplograph | 0.892 | 0.897 | 0.875 | 0.962 | +0.0001 |
 
-In this deliberately strong synthetic dataset, protein measurements alone
-separated the two classes perfectly at every site. Adding age, sex, and the
-haplograph summaries therefore produced no measurable improvement in accuracy,
-F1, or ROC AUC. This equality should not be interpreted as evidence that the
-additional features are uninformative in real data; it indicates that the
-synthetic phenotype signal is already fully recoverable from proteomics.
+Using all 4,000 samples with a held-out evaluation removes the earlier
+training-set optimism. Proteomics alone gave the strongest or essentially tied
+performance. Adding age, sex, and haplograph summaries changed mean ROC AUC by
+less than 0.001, indicating that the synthetic proteomic signal dominates this
+federated task.
+
+### Centralized versus federated models
+
+| Model | Training mode | Test accuracy | Test balanced accuracy | Test F1 | Test ROC AUC |
+|---|---|---:|---:|---:|---:|
+| Logistic regression | Centralized | 0.855 | 0.848 | 0.820 | 0.933 |
+| PyGCN 2 | Centralized | 0.469 | 0.513 | 0.537 | 0.517 |
+| Logistic regression | Federated FedAvg | 0.892 | 0.897 | 0.875 | 0.962 |
+| PyGCN 2 | Federated FedAvg | 0.560 | 0.496 | 0.214 | 0.557 |
+
+The federated PyGCN 2 model had higher ROC AUC than centralized PyGCN 2, but
+remained substantially weaker than logistic regression. Optimization differs
+between the approaches, so these values describe this implementation rather
+than a universal advantage for centralized or federated training.
 
 ### Graph size and graph/model comparison
 
@@ -286,6 +311,7 @@ Main scripts:
 - [`scripts/build_knowledge_graph.py`](scripts/build_knowledge_graph.py)
 - [`scripts/plot_haplograph_comparison.py`](scripts/plot_haplograph_comparison.py)
 - [`scripts/run_pyg_comparison.py`](scripts/run_pyg_comparison.py)
+- [`scripts/run_federated_pygcn.py`](scripts/run_federated_pygcn.py)
 
 Result directories:
 
@@ -293,3 +319,4 @@ Result directories:
 - [`proteomics/knowledge_graph/`](proteomics/knowledge_graph/)
 - [`proteomics/graph_comparison/`](proteomics/graph_comparison/)
 - [`proteomics/pyg_results/`](proteomics/pyg_results/)
+- [`proteomics/federated_pyg_results/`](proteomics/federated_pyg_results/)
