@@ -24,23 +24,36 @@ from pathlib import Path
 
 RNG_SEED = 42
 N_SITES = 3
-N_SAMPLES_PER_SITE = 40
+DEFAULT_N_SAMPLES_TOTAL = 4000
 OUTPUT_DIR = Path("./synthetic_proteomics_chr22")
 
-BIOLOGICAL_SD = 0.8      # inter-individual variance (unexplained by covariates)
-TECHNICAL_SD = 0.3       # technical noise (instrument, run)
+BIOLOGICAL_SD = 1.2      # inter-individual variance (unexplained by covariates) - increased for more heterogeneity
+TECHNICAL_SD = 0.4       # technical noise (instrument, run) - increased for more heterogeneity
 MISSING_RATE_AT_LOD = 0.15  # missing probability for the least abundant protein
 BASELINE_MIN = 6.0        # log2 intensity range covering plasma proteome dynamic range
 BASELINE_MAX = 16.0
 
 # Covariate effect sizes: how strongly age/sex/phenotype shift a protein's
-# log2 intensity. Drawn per protein from a normal distribution centered on
-# 0, so most proteins get a small effect and a few get a strong one -
-# mirrors real biology (covariate effects are heterogeneous across the
-# proteome, not all-or-nothing).
-AGE_EFFECT_SD = 0.5
-SEX_EFFECT_SD = 0.5
-PHENOTYPE_EFFECT_SD = 0.6
+# log2 intensity, for the subset of proteins that are actually associated
+# with each covariate (see *_ASSOCIATION_FRACTION below).
+# Lowered vs. the first version, which made phenotype trivially separable
+# (100% accuracy / AUC = 1). Two things caused that, and sample size alone
+# fixes neither: (1) too-strong effects relative to noise, now addressed
+# by lower effect SDs and higher BIOLOGICAL_SD/TECHNICAL_SD; (2) EVERY
+# protein carrying a small phenotype effect, which a classifier can
+# aggregate across hundreds of proteins into a near-perfect signal even
+# if each one is individually weak. Restricting the effect to a random
+# subset of proteins (sparsity, like real biology) fixes that second
+# issue directly.
+AGE_EFFECT_SD = 0.3
+SEX_EFFECT_SD = 0.3
+PHENOTYPE_EFFECT_SD = 0.5
+
+# Fraction of proteins that are actually associated with each covariate;
+# the rest get an effect of exactly 0 for that covariate.
+AGE_ASSOCIATION_FRACTION = 0.15
+SEX_ASSOCIATION_FRACTION = 0.15
+PHENOTYPE_ASSOCIATION_FRACTION = 0.08
 
 AGE_MIN = 18
 AGE_MAX = 85
@@ -166,6 +179,10 @@ def main():
         "--skip-gene-symbols", action="store_true",
         help="Skip the UniProt gene symbol lookup (useful if you have no internet access).",
     )
+    parser.add_argument(
+        "--n-samples", type=int, default=DEFAULT_N_SAMPLES_TOTAL,
+        help=f"Total number of samples across all {N_SITES} sites (default: {DEFAULT_N_SAMPLES_TOTAL}).",
+    )
     args = parser.parse_args()
 
     bed_path = Path(args.bed)
@@ -181,11 +198,17 @@ def main():
         print("Looking up gene symbols on UniProt (cached after first run)...")
         gene_symbols = fetch_gene_symbols(proteins, OUTPUT_DIR / "gene_symbol_cache.csv")
 
+    # Split the requested total as evenly as possible across sites (any
+    # remainder goes to the first sites, e.g. 4000 / 3 -> 1334, 1333, 1333).
+    base, remainder = divmod(args.n_samples, N_SITES)
+    samples_per_site = [base + 1 if i < remainder else base for i in range(N_SITES)]
+    id_width = len(str(max(samples_per_site)))
+
     # Build the full sample list across all sites up front, so metadata and
     # per-protein covariate effects are consistent across the whole cohort.
     site_sample_ids = {
-        f"SITE{i}": [f"SITE{i}_PT{str(j).zfill(3)}" for j in range(1, N_SAMPLES_PER_SITE + 1)]
-        for i in range(1, N_SITES + 1)
+        f"SITE{i + 1}": [f"SITE{i + 1}_PT{str(j).zfill(id_width)}" for j in range(1, samples_per_site[i] + 1)]
+        for i in range(N_SITES)
     }
     all_sample_ids = [sid for ids in site_sample_ids.values() for sid in ids]
 
@@ -201,15 +224,21 @@ def main():
         OUTPUT_DIR / "protein_baselines.csv"
     )
 
-    # Injected signal: per-protein effect sizes for age/sex/phenotype.
-    effects = {
-        p: (
-            rng.normal(0, AGE_EFFECT_SD),
-            rng.normal(0, SEX_EFFECT_SD),
-            rng.normal(0, PHENOTYPE_EFFECT_SD),
-        )
-        for p in proteins
-    }
+    # Injected signal: per-protein effect sizes for age/sex/phenotype. Only
+    # a random subset of proteins is actually associated with each
+    # covariate (the rest get an effect of exactly 0) - see the sparsity
+    # note above the *_ASSOCIATION_FRACTION constants.
+    n_proteins = len(proteins)
+    is_age_assoc = rng.random(n_proteins) < AGE_ASSOCIATION_FRACTION
+    is_sex_assoc = rng.random(n_proteins) < SEX_ASSOCIATION_FRACTION
+    is_pheno_assoc = rng.random(n_proteins) < PHENOTYPE_ASSOCIATION_FRACTION
+
+    effects = {}
+    for idx, p in enumerate(proteins):
+        beta_age = rng.normal(0, AGE_EFFECT_SD) if is_age_assoc[idx] else 0.0
+        beta_sex = rng.normal(0, SEX_EFFECT_SD) if is_sex_assoc[idx] else 0.0
+        beta_pheno = rng.normal(0, PHENOTYPE_EFFECT_SD) if is_pheno_assoc[idx] else 0.0
+        effects[p] = (beta_age, beta_sex, beta_pheno)
     effects_df = pd.DataFrame(effects, index=["beta_age", "beta_sex", "beta_phenotype"]).T
     effects_df.index.name = "protein_id"
     effects_df.to_csv(OUTPUT_DIR / "protein_covariate_effects.csv")

@@ -39,26 +39,36 @@ def load_all(data_dir: Path):
 
 
 def plot_heatmap(matrix: pd.DataFrame, metadata: pd.DataFrame, effects: pd.DataFrame,
-                  gene_symbols: pd.Series, out_path: Path):
-    # Pick the proteins with the strongest injected signal (any covariate),
-    # so the heatmap actually shows visible structure instead of noise.
-    total_effect = effects[["beta_age", "beta_sex", "beta_phenotype"]].abs().sum(axis=1)
-    top_proteins = total_effect.sort_values(ascending=False).head(N_TOP_PROTEINS_HEATMAP).index
-    sub = matrix.loc[top_proteins]
+                  gene_symbols: pd.Series, out_path: Path, max_samples_per_group: int = 30,
+                  rng: np.random.Generator = None):
+    # Select proteins specifically by phenotype effect (not the combined
+    # age+sex+phenotype total), so the heatmap actually tells the
+    # phenotype story rather than being diluted by age/sex-only proteins.
+    top_proteins = effects["beta_phenotype"].abs().sort_values(ascending=False).head(N_TOP_PROTEINS_HEATMAP).index
 
-    # Impute missing values with that protein's own mean, for display only
-    # (keeps every sample in the heatmap instead of dropping anyone who has
-    # a single missing value among these 40 proteins - with ~15% missingness
-    # per protein, requiring zero missing values across 40 proteins would
-    # discard almost the entire cohort).
+    # With thousands of samples, a heatmap with one column per sample is
+    # unreadable regardless of how strong the underlying signal is - this
+    # is a display legibility limit, not a data problem. Subsample a
+    # manageable number per phenotype group instead of plotting everyone.
+    if rng is None:
+        rng = np.random.default_rng(0)
+    sampled_ids = []
+    for pheno_value, group in metadata.groupby("phenotype"):
+        candidates = [s for s in group.index if s in matrix.columns]
+        n = min(max_samples_per_group, len(candidates))
+        sampled_ids.extend(rng.choice(candidates, size=n, replace=False))
+
+    sub = matrix.loc[top_proteins, sampled_ids]
+
+    # Impute missing values with that protein's own mean, for display only.
     sub_filled = sub.apply(lambda row: row.fillna(row.mean()), axis=1)
 
     # Z-score each protein (row) so the heatmap shows relative variation,
     # not raw abundance differences between proteins.
     z = sub_filled.sub(sub_filled.mean(axis=1), axis=0).div(sub_filled.std(axis=1), axis=0)
 
-    # Order samples by phenotype then site, so blocks are visually grouped.
-    sample_order = metadata.loc[z.columns].sort_values(["phenotype", "site"] if "site" in metadata.columns else ["phenotype"]).index
+    # Order samples by phenotype so the two groups appear as clean blocks.
+    sample_order = metadata.loc[z.columns].sort_values("phenotype").index
     z = z[sample_order]
 
     phenotype_colors = metadata.loc[sample_order, "phenotype"].map({0: "#8ecae6", 1: "#e76f51"})
@@ -77,10 +87,10 @@ def plot_heatmap(matrix: pd.DataFrame, metadata: pd.DataFrame, effects: pd.DataF
         figsize=(12, 10),
         cbar_kws={"label": "Z-scored log2 intensity"},
     )
-    g.ax_heatmap.set_xlabel("Samples (all 3 sites, ordered by phenotype)")
+    g.ax_heatmap.set_xlabel(f"Samples ({len(sampled_ids)} of {matrix.shape[1]} shown, {max_samples_per_group}/group, ordered by phenotype)")
     g.ax_heatmap.set_ylabel("Protein (gene symbol)")
     g.fig.suptitle(
-        f"Top {N_TOP_PROTEINS_HEATMAP} proteins by injected covariate effect size",
+        f"Top {N_TOP_PROTEINS_HEATMAP} proteins by phenotype effect size",
         y=1.02, fontsize=13,
     )
 
@@ -134,7 +144,7 @@ def main():
     matrix, metadata, effects, gene_symbols = load_all(data_dir)
 
     heatmap_path = out_dir / "proteomics_heatmap_top_signal.png"
-    plot_heatmap(matrix, metadata, effects, gene_symbols, heatmap_path)
+    plot_heatmap(matrix, metadata, effects, gene_symbols, heatmap_path, rng=np.random.default_rng(0))
     print(f"Saved heatmap -> {heatmap_path}")
 
     boxplot_path = out_dir / "top_phenotype_protein_boxplot.png"
