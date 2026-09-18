@@ -106,10 +106,19 @@ def draw_combined(edges: pd.DataFrame, graph_features: pd.DataFrame, output: Pat
                            cmap="coolwarm", node_size=85, label="Protein", ax=ax)
     membership = [(u, v) for u, v, d in graph.edges(data=True) if d["relation"] == "contains"]
     cooccurrence = [(u, v) for u, v, d in graph.edges(data=True) if d["relation"] == "co_occurs"]
+    cooccurrence_data = [d for _, _, d in graph.edges(data=True) if d["relation"] == "co_occurs"]
+    weight_values = np.log1p([data["weight"] for data in cooccurrence_data])
+    lift_values = np.log1p([data["lift"] for data in cooccurrence_data])
+    if cooccurrence_data:
+        weight_scale = (weight_values - weight_values.min()) / max(weight_values.ptp(), 1e-6)
+        lift_scale = (lift_values - lift_values.min()) / max(lift_values.ptp(), 1e-6)
+        cooccurrence_widths = 0.8 + 4.0 * (weight_scale + lift_scale) / 2
+    else:
+        cooccurrence_widths = []
     nx.draw_networkx_edges(graph, positions, edgelist=membership, edge_color="#999999",
                            width=0.5, alpha=0.35, ax=ax)
     nx.draw_networkx_edges(graph, positions, edgelist=cooccurrence, edge_color="#d55e00",
-                           width=1.2, alpha=0.5, ax=ax)
+                           width=cooccurrence_widths, alpha=0.6, ax=ax)
     nx.draw_networkx_labels(
         graph, positions,
         labels={
@@ -122,18 +131,16 @@ def draw_combined(edges: pd.DataFrame, graph_features: pd.DataFrame, output: Pat
         },
         font_size=5, bbox={"alpha": 0.65, "color": "white", "pad": 0.2}, ax=ax,
     )
-    edge_labels = {}
-    for left, right, data in graph.edges(data=True):
-        if data["relation"] == "co_occurs":
-            edge_labels[(left, right)] = f"w={data['weight']:.0f}; l={data['lift']:.1f}"
-        else:
-            edge_labels[(left, right)] = "contains"
-    nx.draw_networkx_edge_labels(
-        graph, positions, edge_labels=edge_labels, font_size=4, rotate=False,
-        label_pos=0.5, bbox={"alpha": 0.7, "color": "white", "pad": 0.1}, ax=ax,
-    )
     ax.set_title("Integrated haploblock–protein network\nprotein color = phenotype 1 minus phenotype 0 expression")
-    ax.legend(frameon=False)
+    from matplotlib.lines import Line2D
+    ax.legend(
+        handles=[
+            Line2D([0], [0], color="#999999", lw=1, label="Protein membership"),
+            Line2D([0], [0], color="#d55e00", lw=1, label="Lower weight/lift"),
+            Line2D([0], [0], color="#d55e00", lw=4, label="Higher weight/lift"),
+        ],
+        frameon=False, loc="upper left",
+    )
     ax.axis("off")
     fig.tight_layout()
     fig.savefig(output, dpi=180)
